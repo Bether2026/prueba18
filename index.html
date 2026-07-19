@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Enzo te escribió 💬</title>
+<meta name="description" content="Tenés un mensaje nuevo de Enzo. Y no es un mensaje cualquiera.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════
+   ENZO TE ESCRIBIÓ — Los 18 de Enzo · Demo
+   Concepto: la invitación ES una conversación.
+   Enzo te escribe, vos le respondés tocando
+   opciones, y toda la info (fecha, mapa,
+   countdown vivo, quiz con premio, RSVP) llega
+   como mensajes. Nadie llena un formulario:
+   todos saben chatear.
+   ══════════════════════════════════════════════ */
+:root{
+  --azul:#4A9FFF;
+  --violeta:#7C5CFF;
+  --verde:#3DDC84;
+  --bg:#0B0F16;
+  --bg2:#101722;
+  --header:#131C2A;
+  --bub-enzo:#1A2433;
+  --bub-mia1:#7C5CFF;
+  --bub-mia2:#4A9FFF;
+  --ink:#EAF0FA;
+  --ink-dim:rgba(234,240,250,.6);
+  --border:rgba(124,92,255,.25);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:'Outfit',sans-serif;font-weight:400;
+  overflow:hidden;min-width:320px;
+}
+#confetti-canvas{position:fixed;inset:0;z-index:80;pointer-events:none}
+
+/* ══════════ NOTIFICACIÓN (apertura) ══════════ */
+#notif{position:fixed;inset:0;z-index:60;background:
+  radial-gradient(120% 100% at 50% 0%, #131C2A 0%, var(--bg) 60%);
+  display:flex;align-items:center;justify-content:center;padding:1.6rem;
+  transition:opacity .8s,visibility .8s}
+#notif.closed{opacity:0;visibility:hidden;pointer-events:none}
+.notif-card{max-width:360px;width:100%;background:rgba(26,36,51,.9);border:1px solid var(--border);
+  border-radius:22px;padding:1.4rem 1.3rem;backdrop-filter:blur(10px);
+  box-shadow:0 24px 60px rgba(0,0,0,.6);animation:notifIn .7s cubic-bezier(.2,1.4,.4,1)}
+@keyframes notifIn{0%{transform:translateY(-40px) scale(.9);opacity:0}100%{transform:none;opacity:1}}
+.notif-top{display:flex;align-items:center;gap:.6rem;font-size:.72rem;color:var(--ink-dim);
+  letter-spacing:.06em;margin-bottom:.9rem}
+.notif-top b{color:var(--ink);font-weight:600}
+.notif-row{display:flex;gap:.9rem;align-items:center}
+.avatar{width:52px;height:52px;border-radius:50%;flex:0 0 52px;
+  background:linear-gradient(135deg,var(--violeta),var(--azul));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:1.4rem;color:#fff;position:relative}
+.avatar::after{content:"";position:absolute;right:0;bottom:0;width:14px;height:14px;
+  border-radius:50%;background:var(--verde);border:2.5px solid var(--bg2)}
+.notif-nombre{font-weight:700;font-size:1.05rem}
+.notif-msg{color:var(--ink-dim);font-size:.9rem;margin-top:.15rem}
+.notif-badge{margin-left:auto;background:var(--verde);color:#06281А;color:#06281a;
+  font-weight:800;font-size:.78rem;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;animation:badgeP 1.4s infinite}
+@keyframes badgeP{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.btn-abrir{
+  margin-top:1.2rem;width:100%;padding:1rem;min-height:52px;border:none;border-radius:14px;
+  background:linear-gradient(110deg,var(--violeta),var(--azul));color:#fff;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.04em;
+  box-shadow:0 12px 30px rgba(124,92,255,.4);transition:transform .25s,box-shadow .25s}
+.btn-abrir:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(124,92,255,.55)}
+.btn-abrir:active{transform:scale(.98)}
+
+/* ══════════ APP DE CHAT ══════════ */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;z-index:2}
+.chat-header{flex:0 0 auto;display:flex;align-items:center;gap:.8rem;
+  padding:max(env(safe-area-inset-top),10px) 14px 10px;background:var(--header);
+  border-bottom:1px solid rgba(255,255,255,.06);z-index:5}
+.chat-header .avatar{width:40px;height:40px;flex-basis:40px;font-size:1.1rem}
+.ch-info{line-height:1.2}
+.ch-nombre{font-weight:700;font-size:.98rem}
+.ch-estado{font-size:.72rem;color:var(--verde)}
+.ch-icons{margin-left:auto;display:flex;gap:1rem;color:var(--ink-dim);font-size:1rem}
+#mute-btn{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:1.05rem;padding:.3rem}
+
+#mensajes{flex:1;overflow-y:auto;padding:16px 12px 8px;display:flex;flex-direction:column;gap:9px;
+  background:
+    radial-gradient(60% 40% at 20% 10%, rgba(124,92,255,.06), transparent),
+    radial-gradient(50% 35% at 85% 70%, rgba(74,159,255,.05), transparent),
+    var(--bg);
+  overscroll-behavior:contain}
+#mensajes::-webkit-scrollbar{width:0}
+
+/* burbujas */
+.msg{max-width:82%;padding:.65rem .85rem;border-radius:16px;font-size:.94rem;line-height:1.5;
+  position:relative;animation:msgIn .35s cubic-bezier(.2,1.2,.4,1);word-break:break-word}
+@keyframes msgIn{0%{transform:translateY(14px) scale(.92);opacity:0}100%{transform:none;opacity:1}}
+.msg.enzo{align-self:flex-start;background:var(--bub-enzo);border-bottom-left-radius:5px}
+.msg.mia{align-self:flex-end;background:linear-gradient(120deg,var(--bub-mia1),var(--bub-mia2));
+  border-bottom-right-radius:5px;color:#fff}
+.msg .hora{display:inline-block;font-size:.62rem;color:rgba(255,255,255,.55);margin-left:.5rem;
+  vertical-align:bottom;transform:translateY(2px)}
+.msg.mia .hora::after{content:" ✓✓";color:#9EE8FF}
+.msg b{font-weight:700;color:#fff}
+.msg.enzo b{color:var(--azul)}
+.msg .emoji-big{font-size:1.6rem;line-height:1.2}
+
+/* escribiendo… */
+.typing{align-self:flex-start;background:var(--bub-enzo);border-radius:16px;border-bottom-left-radius:5px;
+  padding:.75rem 1rem;display:flex;gap:5px;animation:msgIn .3s}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--ink-dim);animation:tp 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes tp{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+
+/* burbujas especiales */
+.msg.destacada{background:linear-gradient(135deg,#1A2433,#22304a);border:1px solid var(--border)}
+.dest-tit{font-weight:800;font-size:1.15rem;letter-spacing:.02em}
+.dest-sub{color:var(--ink-dim);font-size:.84rem;margin-top:.2rem}
+.msg-btn{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;margin-right:.4rem;
+  padding:.55rem 1rem;min-height:42px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(124,92,255,.12);color:var(--ink);cursor:pointer;text-decoration:none;
+  font-family:'Outfit',sans-serif;font-weight:600;font-size:.8rem;transition:all .25s}
+.msg-btn:hover{background:rgba(124,92,255,.25);transform:translateY(-1px)}
+
+.cd-bubble{display:flex;gap:.5rem;margin-top:.6rem}
+.cd-cell{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;
+  padding:.5rem .4rem;min-width:52px;text-align:center}
+.cd-n{font-weight:800;font-size:1.15rem;color:var(--azul);font-variant-numeric:tabular-nums}
+.cd-l{font-size:.56rem;letter-spacing:.16em;color:var(--ink-dim);text-transform:uppercase}
+
+.mapa-mini{margin-top:.6rem;border-radius:12px;overflow:hidden;border:1px solid var(--border);
+  background:
+    repeating-linear-gradient(0deg,rgba(74,159,255,.07) 0 1px,transparent 1px 22px),
+    repeating-linear-gradient(90deg,rgba(74,159,255,.07) 0 1px,transparent 1px 22px),
+    linear-gradient(140deg,#101B2C,#0D1420);
+  height:110px;position:relative}
+.mapa-pin{position:absolute;left:50%;top:42%;transform:translate(-50%,-100%);font-size:1.7rem;
+  animation:pinB 1.6s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+@keyframes pinB{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-120%)}}
+.mapa-ruta{position:absolute;inset:0}
+
+/* nota de voz */
+.audio-b{display:flex;align-items:center;gap:.7rem;min-width:210px}
+.audio-play{width:38px;height:38px;flex:0 0 38px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--violeta),var(--azul));color:#fff;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center}
+.audio-wave{display:flex;align-items:center;gap:2.5px;height:26px;flex:1}
+.audio-wave i{width:3px;border-radius:2px;background:rgba(255,255,255,.45);height:var(--h,8px)}
+.audio-b.playing .audio-wave i{animation:wv .7s ease-in-out infinite;animation-delay:calc(var(--i)*.06s);
+  background:#9EE8FF}
+@keyframes wv{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.4)}}
+.audio-dur{font-size:.7rem;color:var(--ink-dim)}
+.audio-cap{margin-top:.5rem;font-size:.8rem;color:var(--ink-dim);font-style:italic;display:none}
+
+/* chips de dress code */
+.chips-b{display:flex;gap:.7rem;margin-top:.6rem}
+.chip-b{display:flex;flex-direction:column;align-items:center;gap:.3rem;font-size:.6rem;
+  color:var(--ink-dim);letter-spacing:.06em}
+.chip-b i{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);
+  box-shadow:0 0 12px var(--glow,transparent)}
+
+/* burbuja de premio */
+.msg.premio-b{background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid #FFC93C;
+  box-shadow:0 0 30px rgba(255,201,60,.35)}
+.premio-tit{font-weight:800;font-size:1.1rem;color:#FFC93C}
+
+/* barra de opciones / input */
+#barra{flex:0 0 auto;padding:10px 12px max(env(safe-area-inset-bottom),12px);
+  background:var(--header);border-top:1px solid rgba(255,255,255,.06)}
+#opciones{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:flex-end}
+.opcion{padding:.75rem 1.15rem;min-height:48px;border-radius:999px;border:1.5px solid var(--border);
+  background:rgba(124,92,255,.1);color:var(--ink);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:600;font-size:.88rem;
+  transition:all .22s;animation:opIn .4s cubic-bezier(.2,1.3,.4,1) backwards}
+.opcion:nth-child(2){animation-delay:.08s}.opcion:nth-child(3){animation-delay:.16s}
+@keyframes opIn{0%{transform:translateY(16px);opacity:0}100%{transform:none;opacity:1}}
+.opcion:hover{background:rgba(124,92,255,.22);transform:translateY(-2px)}
+.opcion:active{transform:scale(.96)}
+.opcion.primaria{background:linear-gradient(110deg,var(--violeta),var(--azul));border:none;color:#fff}
+#form-inline{display:none;flex-direction:column;gap:.55rem}
+.in-chat{width:100%;padding:.85rem 1rem;min-height:48px;border-radius:14px;
+  border:1.5px solid var(--border);background:rgba(255,255,255,.05);color:var(--ink);
+  font-family:'Outfit',sans-serif;font-size:.92rem;outline:none;transition:border-color .3s}
+.in-chat:focus{border-color:var(--azul)}
+.in-chat::placeholder{color:rgba(234,240,250,.4)}
+#barra .vacia{color:var(--ink-dim);font-size:.8rem;text-align:center;padding:.4rem}
+
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+  background:var(--bg2);border:1px solid var(--border);color:var(--ink);border-radius:12px;
+  padding:.75rem 1.3rem;font-size:.84rem;z-index:90;opacity:0;pointer-events:none;
+  transition:all .4s;box-shadow:0 14px 40px rgba(0,0,0,.55);max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ══════════ NOTIFICACIÓN ══════════ -->
+<div id="notif">
+  <div class="notif-card">
+    <div class="notif-top">💬 <b>bether·chat</b> · ahora</div>
+    <div class="notif-row">
+      <div class="avatar">E</div>
+      <div>
+        <div class="notif-nombre">Enzo 🎂</div>
+        <div class="notif-msg">te mandó un mensaje…</div>
+      </div>
+      <div class="notif-badge">1</div>
+    </div>
+    <button class="btn-abrir" onclick="abrirChat()">Abrir el chat</button>
+  </div>
+</div>
+
+<!-- ══════════ CHAT ══════════ -->
+<div id="app">
+  <div class="chat-header">
+    <div class="avatar">E</div>
+    <div class="ch-info">
+      <div class="ch-nombre">Enzo 🎂</div>
+      <div class="ch-estado" id="ch-estado">en línea</div>
+    </div>
+    <div class="ch-icons"><button id="mute-btn" onclick="toggleAudio()" aria-label="Silenciar">🔊</button></div>
+  </div>
+  <div id="mensajes"></div>
+  <div id="barra">
+    <div id="opciones"><div class="vacia">Enzo está escribiendo…</div></div>
+    <div id="form-inline"></div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   CFG
+   ══════════════════════════════════════════════ */
+const CFG = {
+  nombre: 'Enzo',
+  edad: 18,
+  evento: 'demo-chat-enzo-18',           /* ⚠ REVISAR: slug */
+  fechaISO: '2026-11-14T22:00:00-03:00',
+  fechaTxt: '14 de noviembre',
+  salon: 'Depósito Cero',
+  direccion: 'Av. del Portal 1808, Adrogué, Buenos Aires, Argentina', /* ⚠ REVISAR: demo */
+  backend: 'localStorage',               /* ⚠ REVISAR: Supabase en producción */
+};
+
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hora = () => new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+let toastT;
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg; t.className = 'show';
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = '', 3000);
+}
+
+/* ══════════════════════════════════════════════
+   SONIDOS del chat (Web Audio, minimalistas)
+   ══════════════════════════════════════════════ */
+let actx = null, muted = false;
+function ensureCtx(){ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); }
+function pop(freq, vol){
+  try{
+    ensureCtx(); if(muted) return;
+    const t = actx.currentTime;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * 1.6, t + .07);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.0001, t + .16);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + .18);
+  }catch(e){}
+}
+const sndRecibir = () => pop(520, .12);
+const sndEnviar  = () => pop(760, .1);
+function toggleAudio(){ muted = !muted; $('mute-btn').textContent = muted ? '🔇' : '🔊'; }
+
+/* ══════════════════════════════════════════════
+   CONFETTI overlay
+   ══════════════════════════════════════════════ */
+const ccv = $('confetti-canvas'), cctx = ccv.getContext('2d');
+let CW, CH, confs = [];
+const cres = () => { CW = ccv.width = innerWidth; CH = ccv.height = innerHeight; };
+cres(); addEventListener('resize', cres);
+function confetear(n){
+  for(let i = 0; i < (n || 60); i++){
+    confs.push({ x: CW / 2, y: CH * .35, vx: rnd(-6, 6), vy: rnd(-9, -2),
+      w: rnd(4, 8), h: rnd(6, 11), rot: rnd(0, 7), rotv: rnd(-.25, .25), life: 1, decay: rnd(.005, .011),
+      c: ['#7C5CFF', '#4A9FFF', '#3DDC84', '#FFC93C', '#FFFFFF'][(Math.random() * 5) | 0] });
+  }
+}
+(function cframe(){
+  cctx.clearRect(0, 0, CW, CH);
+  for(let i = confs.length - 1; i >= 0; i--){
+    const c = confs[i];
+    c.x += c.vx; c.y += c.vy; c.vy += .16; c.vx *= .99; c.rot += c.rotv; c.life -= c.decay;
+    if(c.life <= 0 || c.y > CH + 30){ confs.splice(i, 1); continue; }
+    cctx.save(); cctx.translate(c.x, c.y); cctx.rotate(c.rot);
+    cctx.globalAlpha = Math.min(1, c.life * 1.4); cctx.fillStyle = c.c;
+    cctx.fillRect(-c.w / 2, -c.h / 2, c.w * Math.abs(Math.sin(c.rot * 2)) + 1, c.h);
+    cctx.restore();
+  }
+  requestAnimationFrame(cframe);
+})();
+
+/* ══════════════════════════════════════════════
+   MOTOR DEL CHAT
+   ══════════════════════════════════════════════ */
+const M = $('mensajes');
+function scrollAbajo(){ M.scrollTo({ top: M.scrollHeight, behavior: 'smooth' }); }
+
+function burbuja(html, quien, extraClase){
+  const d = document.createElement('div');
+  d.className = `msg ${quien}${extraClase ? ' ' + extraClase : ''}`;
+  d.innerHTML = html + `<span class="hora">${hora()}</span>`;
+  M.appendChild(d); scrollAbajo();
+  quien === 'enzo' ? sndRecibir() : sndEnviar();
+  return d;
+}
+
+async function enzoDice(html, extraClase, msTipeo){
+  $('ch-estado').textContent = 'escribiendo…';
+  const t = document.createElement('div');
+  t.className = 'typing'; t.innerHTML = '<i></i><i></i><i></i>';
+  M.appendChild(t); scrollAbajo();
+  await sleep(msTipeo ?? Math.min(2200, 500 + html.length * 14));
+  t.remove();
+  $('ch-estado').textContent = 'en línea';
+  return burbuja(html, 'enzo', extraClase);
+}
+function yoDigo(texto){ return burbuja(texto, 'mia'); }
+
+function elegir(opts){
+  return new Promise(res => {
+    const cont = $('opciones');
+    cont.innerHTML = '';
+    opts.forEach((o, i) => {
+      const b = document.createElement('button');
+      b.className = 'opcion' + (o.primaria ? ' primaria' : '');
+      b.textContent = o.label;
+      b.onclick = () => {
+        cont.innerHTML = '<div class="vacia">Enzo está escribiendo…</div>';
+        if(!o.silencioso) yoDigo(o.label);
+        res(o.value ?? o.label);
+      };
+      cont.appendChild(b);
+    });
+    scrollAbajo();
+  });
+}
+
+function formInline(campos, btnLabel){
+  return new Promise(res => {
+    $('opciones').innerHTML = '';
+    const f = $('form-inline');
+    f.style.display = 'flex';
+    f.innerHTML = '';
+    const inputs = campos.map(c => {
+      const el = document.createElement(c.area ? 'textarea' : 'input');
+      el.className = 'in-chat';
+      el.placeholder = c.ph;
+      el.maxLength = c.max || 80;
+      if(c.area) el.rows = 2;
+      f.appendChild(el);
+      return el;
+    });
+    const b = document.createElement('button');
+    b.className = 'opcion primaria';
+    b.style.alignSelf = 'flex-end';
+    b.textContent = btnLabel;
+    b.onclick = () => {
+      const vals = inputs.map(i => i.value.trim());
+      if(campos.some((c, i) => c.req && !vals[i])){ toast('Te falta completar algo 👀'); return; }
+      f.style.display = 'none';
+      f.innerHTML = '';
+      $('opciones').innerHTML = '<div class="vacia">Enzo está escribiendo…</div>';
+      res(vals);
+    };
+    f.appendChild(b);
+    inputs[0].focus();
+  });
+}
+
+/* ══════════════════════════════════════════════
+   BURBUJAS ESPECIALES
+   ══════════════════════════════════════════════ */
+function burbujaDatos(){
+  return enzoDice(`
+    <div class="dest-tit">📅 ${CFG.fechaTxt} · 22:00 hs</div>
+    <div class="dest-sub">${CFG.salon} — la noche de mis 18</div>
+    <button class="msg-btn" onclick="descargarICS()">📆 Agendar</button>
+  `, 'destacada');
+}
+function burbujaMapa(){
+  const q = encodeURIComponent(CFG.direccion);
+  return enzoDice(`
+    <div class="dest-tit">📍 ${CFG.salon}</div>
+    <div class="dest-sub">Av. del Portal 1808 · Adrogué</div>
+    <div class="mapa-mini">
+      <svg class="mapa-ruta" viewBox="0 0 240 110" preserveAspectRatio="none">
+        <path d="M-5,88 C50,70 70,95 120,60 S200,35 245,42" fill="none"
+          stroke="#4A9FFF" stroke-width="2.5" stroke-dasharray="7 6" opacity=".7"/>
+      </svg>
+      <span class="mapa-pin">📍</span>
+    </div>
+    <a class="msg-btn" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Google Maps</a>
+    <a class="msg-btn" href="https://waze.com/ul?q=${q}&navigate=yes" target="_blank" rel="noopener">Waze</a>
+    <a class="msg-btn" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">Apple Maps</a>
+  `, 'destacada');
+}
+async function burbujaCountdown(){
+  const d = await enzoDice(`
+    <div class="dest-sub">⏱ Mirá lo que falta (se actualiza solo):</div>
+    <div class="cd-bubble">
+      <div class="cd-cell"><div class="cd-n" data-cd="d">--</div><div class="cd-l">días</div></div>
+      <div class="cd-cell"><div class="cd-n" data-cd="h">--</div><div class="cd-l">hs</div></div>
+      <div class="cd-cell"><div class="cd-n" data-cd="m">--</div><div class="cd-l">min</div></div>
+      <div class="cd-cell"><div class="cd-n" data-cd="s">--</div><div class="cd-l">seg</div></div>
+    </div>
+  `, 'destacada');
+  const target = new Date(CFG.fechaISO).getTime();
+  const pad = n => String(n).padStart(2, '0');
+  setInterval(() => {
+    const diff = Math.max(0, target - Date.now());
+    d.querySelector('[data-cd=d]').textContent = pad(Math.floor(diff / 864e5));
+    d.querySelector('[data-cd=h]').textContent = pad(Math.floor(diff / 36e5) % 24);
+    d.querySelector('[data-cd=m]').textContent = pad(Math.floor(diff / 6e4) % 60);
+    d.querySelector('[data-cd=s]').textContent = pad(Math.floor(diff / 1e3) % 60);
+  }, 1000);
+}
+function burbujaAudio(){
+  const barras = Array.from({ length: 22 }, (_, i) =>
+    `<i style="--h:${(6 + Math.abs(Math.sin(i * 1.3)) * 16) | 0}px;--i:${i}"></i>`).join('');
+  return enzoDice(`
+    <div class="audio-b" id="audio-b">
+      <button class="audio-play" onclick="playAudio(this)">▶</button>
+      <div class="audio-wave">${barras}</div>
+      <span class="audio-dur">0:11</span>
+    </div>
+    <div class="audio-cap" id="audio-cap">🎧 transcripción: «vení porfa… va a ser LA fiesta del año, te lo juro por mis 18 años»</div>
+  `);
+}
+function playAudio(btn){
+  const b = $('audio-b'), cap = $('audio-cap');
+  if(b.classList.contains('playing')) return;
+  b.classList.add('playing');
+  btn.textContent = '❚❚';
+  /* "voz" sintética: secuencia de blips con cadencia de habla */
+  let i = 0;
+  const iv = setInterval(() => {
+    pop(rnd(300, 520), .06);
+    if(++i > 16){ clearInterval(iv); }
+  }, 240);
+  setTimeout(() => {
+    b.classList.remove('playing');
+    btn.textContent = '▶';
+    cap.style.display = 'block';
+    scrollAbajo();
+  }, 4200);
+}
+function burbujaDress(){
+  return enzoDice(`
+    Ah, el dress code 👔 urbano nocturno:
+    <div class="chips-b">
+      <div class="chip-b"><i style="background:linear-gradient(135deg,#0B0F16,#1A2433);--glow:rgba(74,159,255,.35)"></i>Negro</div>
+      <div class="chip-b"><i style="background:linear-gradient(135deg,#7C5CFF,#4A9FFF);--glow:rgba(124,92,255,.5)"></i>Eléctrico</div>
+      <div class="chip-b"><i style="background:linear-gradient(135deg,#3DDC84,#1FA860);--glow:rgba(61,220,132,.5)"></i>Verde</div>
+      <div class="chip-b"><i style="background:linear-gradient(135deg,#E8ECF5,#fff);--glow:rgba(255,255,255,.35)"></i>Blanco</div>
+    </div>
+    <div class="dest-sub" style="margin-top:.5rem">zapatillas sí o sí, se baila en serio 🕺</div>
+  `);
+}
+
+/* ══════════════════════════════════════════════
+   ICS
+   ══════════════════════════════════════════════ */
+function descargarICS(){
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BetherStudio//ChatE18//ES','BEGIN:VEVENT',
+    `UID:${CFG.evento}@betherstudio`,'DTSTART:20261115T010000Z','DTEND:20261115T070000Z',
+    `SUMMARY:18 de ${CFG.nombre}`,
+    `LOCATION:${CFG.salon}, ${CFG.direccion}`,
+    'DESCRIPTION:Enzo te escribió. No podés faltar.',
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  a.download = `18-${CFG.nombre.toLowerCase()}.ics`;
+  a.click();
+  toast('📆 Agendado');
+}
+
+/* ══════════════════════════════════════════════
+   EL GUION — toda la invitación como conversación
+   ══════════════════════════════════════════════ */
+let quizScore = 0;
+async function guion(){
+  await sleep(700);
+  await enzoDice('ey!! 👀');
+  await enzoDice('sí sí, te estoy escribiendo a <b>VOS</b>');
+  await enzoDice('tengo una noticia y no sé cómo decírtela así que la digo nomás:');
+  await enzoDice('<span class="emoji-big">🎂</span><br><b>CUMPLO 18</b> y no pienso festejarlo tranquilo');
+
+  await elegir([
+    { label: 'NOOO ya 18?? 🎉' },
+    { label: 'contame TODO 👂' },
+  ]);
+
+  await enzoDice('jajaja sí, ya sé, ayer tenía 12');
+  await enzoDice('bueno, los datos importantes primero 👇');
+  await burbujaDatos();
+  await burbujaMapa();
+
+  const r1 = await elegir([
+    { label: '¿y cuánto falta? ⏱' },
+    { label: 'ya lo agendé ✅' },
+  ]);
+  if(r1 === 'ya lo agendé ✅') await enzoDice('así me gusta, gente eficiente 😎');
+  await burbujaCountdown();
+
+  await enzoDice('te dejo un audio que lo explica mejor 🎙');
+  await burbujaAudio();
+
+  await elegir([{ label: 'jaja ok ok, ¿algo más?' }]);
+  await burbujaDress();
+
+  /* ── QUIZ ── */
+  await enzoDice('ahora… una cosita más 😏');
+  await enzoDice('<b>¿cuánto me conocés?</b> 5 preguntas. si la rompés, hay <b>premio real</b> en la fiesta 🎁');
+  const jugar = await elegir([
+    { label: 'dale, va 🔥', value: 'si', primaria: true },
+    { label: 'uy no, presión…', value: 'si2' },
+  ]);
+  if(jugar === 'si2') await enzoDice('no hay opción de no jugar jajaja, arrancamos:');
+
+  const QUIZ = [
+    { q: '1/5 — ¿qué día es la fiesta?', ok: '14 de noviembre 🗓', ops: ['14 de noviembre 🗓', '15 de noviembre', '¿había fiesta?'],
+      bien: 'ESA. 14/11, grabalo a fuego 🔥', mal: 'nooo jajaja es el <b>14/11</b>, prestá atención 😤' },
+    { q: '2/5 — ¿cómo se llama el lugar?', ok: 'Depósito Cero 📦', ops: ['Depósito Uno', 'Depósito Cero 📦', 'la casa de tu primo'],
+      bien: 'exacto, Depósito Cero 🙌', mal: 'era <b>Depósito Cero</b>… menos mal que te mandé el mapa 😅' },
+    { q: '3/5 — ¿cuántos cumplo?', ok: '18 🎂', ops: ['17 para siempre', '18 🎂', '40 de espíritu'],
+      bien: '18!! mayor de edad, imparable 😎', mal: 'JAJAJA no, <b>18</b>. aunque lo de 40 de espíritu un poco sí' },
+    { q: '4/5 — ¿a qué hora arranca?', ok: '22:00 ⏰', ops: ['20:00', '22:00 ⏰', 'cuando llegues vos'],
+      bien: '22:00 en punto (bueno, 22:30 siendo realistas)', mal: 'era <b>22:00</b>… pero "cuando llegues vos" me gustó 😌' },
+    { q: '5/5 — la más importante: ¿qué es lo que NO puede faltar esa noche?', ok: 'VOS', ops: ['la música', 'la comida', 'VOS'],
+      bien: '<span class="emoji-big">🥹</span> respuesta correcta. la única que valía doble.', mal: 'mmm técnicamente sí, pero la respuesta era <b>VOS</b> 💜 (te la doy por buena)' },
+  ];
+  quizScore = 0;
+  for(const p of QUIZ){
+    await enzoDice(p.q);
+    const r = await elegir(p.ops.map(o => ({ label: o })));
+    const acierto = r === p.ok || p.q.startsWith('5/5');
+    if(acierto) quizScore++;
+    await enzoDice(acierto ? p.bien : p.mal);
+  }
+  try{ localStorage.setItem('chat-quiz', String(quizScore)); }catch(e){}
+  if(quizScore >= 4){
+    confetear(90);
+    if(navigator.vibrate) navigator.vibrate([30, 50, 30, 50, 100]);
+    await enzoDice(`
+      <div class="premio-tit">🏆 ${quizScore}/5 — GANASTE</div>
+      <div class="dest-sub">mostrame esta pantalla en la fiesta<br>y canjeala por un premio sorpresa 🎁</div>
+    `, 'premio-b');
+    try{ localStorage.setItem('chat-pleno', '1'); }catch(e){}
+  } else {
+    await enzoDice(`${quizScore}/5… bueno, para eso está la fiesta: para conocernos mejor 😂`);
+  }
+
+  /* ── PLAYLIST ── */
+  await enzoDice('otra cosa: estoy armando la playlist con el DJ 🎧');
+  await enzoDice('¿qué canción te hace correr a la pista? pasámela 👇');
+  const [canc, art] = await formInline(
+    [{ ph: 'Canción', req: true }, { ph: 'Artista', req: true }], '🎵 Mandar');
+  yoDigo(`🎵 ${canc} — ${art}`);
+  try{
+    const lista = JSON.parse(localStorage.getItem('chat-playlist') || '[]');
+    lista.push({ c: canc, a: art, t: Date.now() });
+    localStorage.setItem('chat-playlist', JSON.stringify(lista));
+  }catch(e){}
+  /* ⚠ REVISAR: producción → POST Supabase extra:{cancion,artista} */
+  await enzoDice('anotadísima, va directo al DJ 📝🔥');
+
+  /* ── RSVP ── */
+  await enzoDice('bueno… llegó el momento de LA pregunta 😬');
+  await enzoDice('<b>¿venís a mis 18?</b>');
+  const asiste = await elegir([
+    { label: '🎉 OBVIO que voy', value: true, primaria: true },
+    { label: '😢 no voy a poder', value: false },
+  ]);
+
+  let menuSel = null, notas = '';
+  if(asiste){
+    confetear(70);
+    await enzoDice('<span class="emoji-big">🎉🎉🎉</span><br>SÍÍÍ! sabía que podía contar con vos');
+    await enzoDice('para la cena, ¿qué preferís?');
+    menuSel = await elegir([
+      { label: '🍽️ Estándar', value: 'estandar' },
+      { label: '🥗 Vegetariano', value: 'vegetariano' },
+      { label: '🌱 Vegano', value: 'vegano' },
+      { label: '⚠️ Sin TACC', value: 'sin-tacc' },
+    ]);
+    await enzoDice('anotado ✅ ¿algo más que tenga que saber? (alergias, o lo que quieras decirme)');
+    const [n] = await formInline([{ ph: 'Escribí acá (o mandá un “nada”)', max: 300 }], '📨 Enviar');
+    notas = n;
+    if(n) yoDigo(n);
+  } else {
+    await enzoDice('nooo 😭 bueno… te voy a extrañar en serio');
+    await enzoDice('¿me querés dejar un mensajito al menos? 🥺');
+    const [n] = await formInline([{ ph: 'Tu mensaje para Enzo…', max: 300 }], '💌 Enviar');
+    notas = n;
+    if(n) yoDigo(n);
+  }
+  const pleno = (() => { try{ return localStorage.getItem('chat-pleno') === '1'; }catch(e){ return false; } })();
+  try{
+    const lista = JSON.parse(localStorage.getItem('chat-rsvp') || '[]');
+    lista.push({ evento: CFG.evento, tipo: 'cumple-18', nombre: 'Invitado/a',
+      asiste, menu: menuSel, extra: { notas: notas || null, quiz: quizScore, pleno }, t: Date.now() });
+    localStorage.setItem('chat-rsvp', JSON.stringify(lista));
+  }catch(e){}
+  /* ⚠ REVISAR: producción → POST `${supaUrl}/rest/v1/rsvp` con apikey/Bearer */
+
+  if(asiste){
+    await enzoDice(`listo, quedaste <b>confirmad@</b> para el ${CFG.fechaTxt} 🎟`);
+    await enzoDice(pleno
+      ? 'y acordate: tenés un premio pendiente por el quiz 🏆 no te olvides de mostrármelo'
+      : 'nos vemos en la pista. preparate 😎');
+  } else {
+    await enzoDice('gracias por avisarme 💜 igual te guardo un pedazo de torta, palabra');
+  }
+  await enzoDice('cualquier cosa me escribís por acá 👋', null, 900);
+  $('opciones').innerHTML = '<div class="vacia">💜 Una experiencia de Bether Studio · betherstudio.com</div>';
+}
+
+/* ══════════════════════════════════════════════
+   ARRANQUE
+   ══════════════════════════════════════════════ */
+let abierto = false;
+function abrirChat(){
+  if(abierto) return; abierto = true;
+  ensureCtx();
+  pop(660, .1);
+  $('notif').classList.add('closed');
+  guion();
+}
+</script>
+</body>
+</html>
