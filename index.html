@@ -74,6 +74,9 @@ body.modo-fiesta{overflow:auto;height:auto}
   font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.02em;
   box-shadow:0 10px 30px rgba(124,92,255,.4);transition:transform .2s}
 .btn-abrir:active{transform:scale(.97)}
+.btn-sec{margin-top:.6rem;width:100%;padding:.7rem;border-radius:12px;cursor:pointer;
+  background:none;border:1.5px solid var(--border);color:var(--ink-dim);
+  font-family:'Outfit',sans-serif;font-weight:600;font-size:.84rem}
 
 /* ══════════ CHAT ══════════ */
 #app{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10;
@@ -294,6 +297,9 @@ footer a{color:var(--violeta);text-decoration:none;font-weight:600}
   .rev{opacity:1;transform:none}
   .scroll-hint,.notif-badge,.mapa-pin,.deco-g{animation:none}
   .opcion.mega{box-shadow:0 0 26px rgba(124,92,255,.55)}
+  /* los puntitos de "escribiendo…" son feedback funcional,
+     no decoración: se mantienen vivos también acá */
+  .typing i{animation-duration:1.1s!important;animation-iteration-count:infinite!important}
 }
 </style>
 </head>
@@ -876,9 +882,41 @@ function sndDrop(){
   }catch(e){}
 }
 
+/* ══════════════════════════════════════════════
+   PASE DEL DISPOSITIVO — si ya pasaste por el
+   chat, la próxima visita ofrece entrada directa.
+   ⚠ REVISAR: en producción el link personalizado
+   por invitado va con token Supabase (?g=token);
+   esto cubre el mismo dispositivo sin backend.
+   ══════════════════════════════════════════════ */
+function guardarPase(){
+  try{
+    localStorage.setItem('chat-pase', JSON.stringify(
+      { nombre: YO.nombre, asiste: YO.asiste, cancion: YO.cancion, notas: YO.notas, t: Date.now() }));
+  }catch(e){}
+}
+function leerPase(){
+  try{ return JSON.parse(localStorage.getItem('chat-pase') || 'null'); }catch(e){ return null; }
+}
+function irDirectoFiesta(){
+  const p = leerPase(); if(!p) return;
+  YO.nombre = p.nombre || ''; YO.asiste = p.asiste; YO.cancion = p.cancion || null; YO.notas = p.notas || '';
+  revelada = true;
+  ensureCtx();
+  iniciarMusica(true);   /* gesto del usuario: arranca directo, sin riser */
+  $('notif').classList.add('closed');
+  $('app').style.display = 'none';
+  document.body.classList.add('modo-fiesta');
+  prepararTicket();
+  iniciarFiesta();
+  scrollTo(0, 0);
+  confetear(60);
+}
+
 let revelada = false;
 function revelarFiesta(){
   if(revelada) return; revelada = true;
+  guardarPase();
   iniciarMusica();   /* dentro del gesto del usuario: el autoplay queda habilitado */
   sndDrop();
   const app = $('app');
@@ -930,6 +968,7 @@ function prepararTicket(){
 function cambiarAVoy(){
   YO.asiste = true;
   guardarRSVP(); /* ⚠ REVISAR: producción → UPDATE en vez de nuevo insert */
+  guardarPase();
   const e = $('tk-estado');
   e.className = 'tk-estado ok'; e.textContent = '✔ Confirmado/a';
   $('banner-perdida').style.display = 'none';
@@ -962,7 +1001,7 @@ function iniciarFiesta(){
    cae a un pulso generativo para que los visuales
    nunca queden muertos. */
 let musica = null, analyser = null, freqData = null, lastBeat = 0, fallbackOn = false;
-function iniciarMusica(){
+function iniciarMusica(directo){
   ensureCtx();
   musica = new Audio(CFG.musica);
   musica.loop = true;
@@ -984,7 +1023,7 @@ function iniciarMusica(){
   setTimeout(() => {
     if(analyser && !muted) mg.gain.linearRampToValueAtTime(1, actx.currentTime + .6);
     else if(!analyser){ musica.volume = muted ? 0 : 1; }
-  }, 1200);
+  }, directo ? 120 : 1200);
 }
 /* pulso generativo de emergencia: solo mueve los visuales, sin sonido */
 function iniciarPulsoFallback(){
@@ -1029,11 +1068,15 @@ function initFCanvas(){
   for(let i = 0; i < 34; i++) sparks.push({
     x: Math.random() * innerWidth, y: Math.random() * innerHeight,
     v: rnd(.15, .6), s: rnd(1, 2.6), c: PAL[(Math.random() * 4) | 0], ph: rnd(0, 6.28) });
-  /* serpentinas: cintas que caen ondulando, se reciclan arriba */
-  for(let i = 0; i < 11; i++) cintas.push({
-    x: Math.random() * innerWidth, y: rnd(-innerHeight, innerHeight),
-    len: rnd(70, 150), amp: rnd(9, 18), ph: rnd(0, 6.28),
-    v: rnd(.25, .7), giro: rnd(.02, .05), c: PAL[i % 4] });
+  /* serpentinas: cintas de papel con tono base + tono claro (torsión) */
+  const PAL_L = { '#7C5CFF': '#B3A4FF', '#4A9FFF': '#9CCBFF', '#3DDC84': '#96F0BE', '#FFC93C': '#FFE08F' };
+  for(let i = 0; i < 11; i++){
+    const col = PAL[i % 4];
+    cintas.push({
+      x: Math.random() * innerWidth, y: rnd(-innerHeight, innerHeight),
+      len: rnd(80, 160), amp: rnd(7, 12), ph: rnd(0, 6.28),
+      v: rnd(.22, .6), giro: rnd(.025, .055), c: col, cl: PAL_L[col] });
+  }
   requestAnimationFrame(fframe);
 }
 function fframe(now = performance.now()){
@@ -1114,29 +1157,48 @@ function fframe(now = performance.now()){
     fctx.fill();
   }
 
-  /* 4 — serpentinas: cintas de fiesta que caen ondulando */
+  /* 4 — serpentinas: cintas de papel enruladas.
+     El realismo sale de dos cosas: rulo apretado
+     (frecuencia alta a lo largo de la cinta) y
+     torsión — cada tramo alterna tono claro/oscuro
+     como una cinta que muestra frente y dorso. */
   fctx.lineCap = 'round';
   for(const c of cintas){
     c.y += c.v * dt * 1.1;
+    c.x += Math.sin(t * .008 + c.ph) * .25 * dt;          /* deriva lateral suave */
     if(c.y - c.len > FH){ c.y = -c.len - rnd(0, 80); c.x = Math.random() * FW; }
-    fctx.strokeStyle = c.c;
-    fctx.globalAlpha = .55;
-    fctx.lineWidth = 3;
-    fctx.beginPath();
-    const seg = 9;
-    for(let j = 0; j <= seg; j++){
-      const yy = c.y + (j / seg) * c.len;
-      const xx = c.x + Math.sin(c.ph + t * c.giro + j * 1.15) * c.amp;
-      j === 0 ? fctx.moveTo(xx, yy) : fctx.lineTo(xx, yy);
+    const seg = 16;
+    let px = 0, py = 0;
+    for(let j = 0; j < seg; j++){
+      const f0 = j / seg, f1 = (j + 1) / seg;
+      const y0 = c.y + f0 * c.len, y1 = c.y + f1 * c.len;
+      const tw0 = c.ph + t * c.giro + j * 2.4;             /* fase del rulo (apretado) */
+      const tw1 = c.ph + t * c.giro + (j + 1) * 2.4;
+      const x0 = c.x + Math.sin(tw0) * c.amp * (0.6 + 0.4 * f0);
+      const x1 = c.x + Math.sin(tw1) * c.amp * (0.6 + 0.4 * f1);
+      /* torsión: el tono depende de hacia dónde "mira" la cinta */
+      const cara = Math.cos(tw0);
+      fctx.strokeStyle = cara > 0 ? c.cl : c.c;            /* frente claro / dorso oscuro */
+      fctx.globalAlpha = .5 + .3 * Math.abs(cara);
+      fctx.lineWidth = 2.6 + 1.8 * Math.abs(cara);         /* de frente se ve más ancha */
+      fctx.beginPath(); fctx.moveTo(x0, y0); fctx.lineTo(x1, y1); fctx.stroke();
+      px = x1; py = y1;
     }
+    /* puntita enrulada al final */
+    fctx.globalAlpha = .6;
+    fctx.strokeStyle = c.c; fctx.lineWidth = 2.4;
+    fctx.beginPath();
+    fctx.arc(px + 4, py + 3, 4.5, c.ph + t * c.giro, c.ph + t * c.giro + 4.4);
     fctx.stroke();
   }
   fctx.globalAlpha = 1;
 
-  /* 5 — barras EQ en el piso */
+  /* 5 — barras EQ en el piso (bajas: nunca invaden el contenido) */
   const nB = Math.max(10, (FW / 30) | 0), bw = FW / nB;
+  const hMax = Math.min(FH * .11, 74);
   for(let i = 0; i < nB; i++){
-    const h = (14 + Math.abs(Math.sin(i * 1.7 + t * .06)) * 34) * (1 + k * 1.9 + F.hi * .5);
+    let h = (8 + Math.abs(Math.sin(i * 1.7 + t * .06)) * 18) * (1 + k * 1.2 + F.hi * .4);
+    h = Math.min(h, hMax);
     fctx.fillStyle = PAL[i % 4] + '59';
     fctx.fillRect(i * bw + 2, FH - h, bw - 4, h);
   }
@@ -1231,6 +1293,23 @@ function initReveals(){
     s.style.setProperty('--d', rnd(10, 20).toFixed(1) + 's');
     cont.appendChild(s);
   }
+})();
+
+/* si este dispositivo ya pasó por el chat, ofrecer entrada directa */
+(function chequearPase(){
+  const p = leerPase();
+  if(!p || !p.nombre) return;
+  const card = document.querySelector('.notif-card');
+  card.querySelector('.notif-nombre').textContent = `Enzo 🎂 → ${p.nombre}`;
+  card.querySelector('.notif-msg').textContent = 'tu entrada quedó guardada en este dispositivo 🎟';
+  const b = card.querySelector('.btn-abrir');
+  b.textContent = '🎟 Ver mi entrada';
+  b.onclick = irDirectoFiesta;
+  const sec = document.createElement('button');
+  sec.className = 'btn-sec';
+  sec.textContent = '💬 volver a chatear con Enzo';
+  sec.onclick = abrirChat;
+  card.appendChild(sec);
 })();
 
 let abierto = false;
