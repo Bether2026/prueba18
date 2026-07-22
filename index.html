@@ -7,27 +7,27 @@
 <meta name="description" content="Tenés un mensaje nuevo de Enzo. Y no es un mensaje cualquiera.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════
-   ENZO TE ESCRIBIÓ — Los 18 de Enzo · Demo
-   Concepto: la invitación ES una conversación.
-   Enzo te escribe, vos le respondés tocando
-   opciones, y toda la info (fecha, mapa,
-   countdown vivo, quiz con premio, RSVP) llega
-   como mensajes. Nadie llena un formulario:
-   todos saben chatear.
+   ENZO TE ESCRIBIÓ — Los 18 de Enzo · Demo v2
+   Acto 1: la invitación ES una conversación con
+   ramificación real (Enzo responde distinto según
+   lo que elijas, y se acuerda de tu onda).
+   Acto 2: al confirmar, el chat ESTALLA — las
+   burbujas salen volando y detrás estaba la
+   fiesta: la invitación completa en modo boliche,
+   personalizada con todo lo que dijiste.
    ══════════════════════════════════════════════ */
 :root{
   --azul:#4A9FFF;
   --violeta:#7C5CFF;
   --verde:#3DDC84;
+  --oro:#FFC93C;
   --bg:#0B0F16;
   --bg2:#101722;
   --header:#131C2A;
   --bub-enzo:#1A2433;
-  --bub-mia1:#7C5CFF;
-  --bub-mia2:#4A9FFF;
   --ink:#EAF0FA;
   --ink-dim:rgba(234,240,250,.6);
   --border:rgba(124,92,255,.25);
@@ -39,7 +39,9 @@ body{
   font-family:'Outfit',sans-serif;font-weight:400;
   overflow:hidden;min-width:320px;
 }
+body.modo-fiesta{overflow:auto;height:auto}
 #confetti-canvas{position:fixed;inset:0;z-index:80;pointer-events:none}
+#flash{position:fixed;inset:0;z-index:120;background:#fff;opacity:0;pointer-events:none;transition:opacity .18s}
 
 /* ══════════ NOTIFICACIÓN (apertura) ══════════ */
 #notif{position:fixed;inset:0;z-index:60;background:
@@ -59,80 +61,65 @@ body{
   background:linear-gradient(135deg,var(--violeta),var(--azul));
   display:flex;align-items:center;justify-content:center;
   font-weight:800;font-size:1.4rem;color:#fff;position:relative}
-.avatar::after{content:"";position:absolute;right:0;bottom:0;width:14px;height:14px;
-  border-radius:50%;background:var(--verde);border:2.5px solid var(--bg2)}
+.avatar::after{content:"";position:absolute;right:1px;bottom:1px;width:12px;height:12px;border-radius:50%;
+  background:var(--verde);border:2.5px solid var(--header)}
 .notif-nombre{font-weight:700;font-size:1.05rem}
-.notif-msg{color:var(--ink-dim);font-size:.9rem;margin-top:.15rem}
-.notif-badge{margin-left:auto;background:var(--verde);color:#06281А;color:#06281a;
-  font-weight:800;font-size:.78rem;width:24px;height:24px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;animation:badgeP 1.4s infinite}
+.notif-msg{font-size:.86rem;color:var(--ink-dim)}
+.notif-badge{margin-left:auto;background:var(--violeta);color:#fff;font-size:.72rem;font-weight:700;
+  min-width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  animation:badgeP 1.4s ease-in-out infinite}
 @keyframes badgeP{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
-.btn-abrir{
-  margin-top:1.2rem;width:100%;padding:1rem;min-height:52px;border:none;border-radius:14px;
-  background:linear-gradient(110deg,var(--violeta),var(--azul));color:#fff;cursor:pointer;
-  font-family:'Outfit',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.04em;
-  box-shadow:0 12px 30px rgba(124,92,255,.4);transition:transform .25s,box-shadow .25s}
-.btn-abrir:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(124,92,255,.55)}
-.btn-abrir:active{transform:scale(.98)}
+.btn-abrir{margin-top:1.1rem;width:100%;padding:.95rem;border:none;border-radius:14px;cursor:pointer;
+  background:linear-gradient(110deg,var(--violeta),var(--azul));color:#fff;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.02em;
+  box-shadow:0 10px 30px rgba(124,92,255,.4);transition:transform .2s}
+.btn-abrir:active{transform:scale(.97)}
 
-/* ══════════ APP DE CHAT ══════════ */
-#app{position:fixed;inset:0;display:flex;flex-direction:column;z-index:2}
+/* ══════════ CHAT ══════════ */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10;
+  background:linear-gradient(180deg,var(--bg2),var(--bg))}
+#app.tiembla{animation:shk .1s linear 12}
+@keyframes shk{0%{transform:translate(0,0)}25%{transform:translate(-6px,4px)}50%{transform:translate(5px,-5px)}75%{transform:translate(-4px,-4px)}100%{transform:translate(4px,5px)}}
+#app.fuera{opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s}
 .chat-header{flex:0 0 auto;display:flex;align-items:center;gap:.8rem;
-  padding:max(env(safe-area-inset-top),10px) 14px 10px;background:var(--header);
-  border-bottom:1px solid rgba(255,255,255,.06);z-index:5}
-.chat-header .avatar{width:40px;height:40px;flex-basis:40px;font-size:1.1rem}
-.ch-info{line-height:1.2}
-.ch-nombre{font-weight:700;font-size:.98rem}
+  padding:max(env(safe-area-inset-top),12px) 14px 12px;background:var(--header);
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.chat-header .avatar{width:42px;height:42px;flex:0 0 42px;font-size:1.15rem}
+.ch-info{flex:1;min-width:0}
+.ch-nombre{font-weight:700;font-size:1rem}
 .ch-estado{font-size:.72rem;color:var(--verde)}
-.ch-icons{margin-left:auto;display:flex;gap:1rem;color:var(--ink-dim);font-size:1rem}
-#mute-btn{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:1.05rem;padding:.3rem}
-
-#mensajes{flex:1;overflow-y:auto;padding:16px 12px 8px;display:flex;flex-direction:column;gap:9px;
-  background:
-    radial-gradient(60% 40% at 20% 10%, rgba(124,92,255,.06), transparent),
-    radial-gradient(50% 35% at 85% 70%, rgba(74,159,255,.05), transparent),
-    var(--bg);
-  overscroll-behavior:contain}
-#mensajes::-webkit-scrollbar{width:0}
-
-/* burbujas */
-.msg{max-width:82%;padding:.65rem .85rem;border-radius:16px;font-size:.94rem;line-height:1.5;
-  position:relative;animation:msgIn .35s cubic-bezier(.2,1.2,.4,1);word-break:break-word}
-@keyframes msgIn{0%{transform:translateY(14px) scale(.92);opacity:0}100%{transform:none;opacity:1}}
-.msg.enzo{align-self:flex-start;background:var(--bub-enzo);border-bottom-left-radius:5px}
-.msg.mia{align-self:flex-end;background:linear-gradient(120deg,var(--bub-mia1),var(--bub-mia2));
-  border-bottom-right-radius:5px;color:#fff}
-.msg .hora{display:inline-block;font-size:.62rem;color:rgba(255,255,255,.55);margin-left:.5rem;
-  vertical-align:bottom;transform:translateY(2px)}
-.msg.mia .hora::after{content:" ✓✓";color:#9EE8FF}
-.msg b{font-weight:700;color:#fff}
-.msg.enzo b{color:var(--azul)}
-.msg .emoji-big{font-size:1.6rem;line-height:1.2}
-
-/* escribiendo… */
-.typing{align-self:flex-start;background:var(--bub-enzo);border-radius:16px;border-bottom-left-radius:5px;
-  padding:.75rem 1rem;display:flex;gap:5px;animation:msgIn .3s}
-.typing i{width:7px;height:7px;border-radius:50%;background:var(--ink-dim);animation:tp 1.2s infinite}
-.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
-@keyframes tp{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
-
-/* burbujas especiales */
-.msg.destacada{background:linear-gradient(135deg,#1A2433,#22304a);border:1px solid var(--border)}
-.dest-tit{font-weight:800;font-size:1.15rem;letter-spacing:.02em}
-.dest-sub{color:var(--ink-dim);font-size:.84rem;margin-top:.2rem}
-.msg-btn{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;margin-right:.4rem;
-  padding:.55rem 1rem;min-height:42px;border-radius:12px;border:1px solid var(--border);
-  background:rgba(124,92,255,.12);color:var(--ink);cursor:pointer;text-decoration:none;
-  font-family:'Outfit',sans-serif;font-weight:600;font-size:.8rem;transition:all .25s}
-.msg-btn:hover{background:rgba(124,92,255,.25);transform:translateY(-1px)}
-
-.cd-bubble{display:flex;gap:.5rem;margin-top:.6rem}
-.cd-cell{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;
-  padding:.5rem .4rem;min-width:52px;text-align:center}
-.cd-n{font-weight:800;font-size:1.15rem;color:var(--azul);font-variant-numeric:tabular-nums}
-.cd-l{font-size:.56rem;letter-spacing:.16em;color:var(--ink-dim);text-transform:uppercase}
-
-.mapa-mini{margin-top:.6rem;border-radius:12px;overflow:hidden;border:1px solid var(--border);
+.ch-icons button{background:none;border:none;color:var(--ink);font-size:1.15rem;cursor:pointer;padding:.4rem}
+#mensajes{flex:1;overflow-y:auto;padding:1rem .9rem 1.2rem;display:flex;flex-direction:column;gap:.55rem;
+  scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.msg{max-width:82%;padding:.7rem .95rem;border-radius:18px;font-size:.94rem;line-height:1.45;
+  position:relative;animation:msgIn .35s cubic-bezier(.2,1.3,.4,1)}
+@keyframes msgIn{0%{transform:translateY(14px) scale(.94);opacity:0}100%{transform:none;opacity:1}}
+.msg.enzo{align-self:flex-start;background:var(--bub-enzo);border-bottom-left-radius:6px;
+  border:1px solid rgba(255,255,255,.05)}
+.msg.mia{align-self:flex-end;background:linear-gradient(110deg,var(--violeta),var(--azul));
+  color:#fff;border-bottom-right-radius:6px}
+.msg .hora{display:block;font-size:.62rem;opacity:.5;margin-top:.3rem;text-align:right}
+.msg.destacada{border:1.5px solid var(--border);background:linear-gradient(160deg,#182238,#131C2A);
+  box-shadow:0 8px 26px rgba(124,92,255,.15)}
+.emoji-big{font-size:2.2rem;line-height:1.2;display:inline-block}
+.typing{align-self:flex-start;background:var(--bub-enzo);border-radius:18px;border-bottom-left-radius:6px;
+  padding:.85rem 1rem;display:flex;gap:5px;border:1px solid rgba(255,255,255,.05)}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--ink-dim);
+  animation:tp 1.1s ease-in-out infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tp{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-5px);opacity:1}}
+.dest-tit{font-weight:800;font-size:1.05rem;margin-bottom:.15rem}
+.dest-sub{font-size:.82rem;color:var(--ink-dim)}
+.msg-btn{display:inline-block;margin:.55rem .4rem 0 0;padding:.55rem .95rem;border-radius:11px;border:1.5px solid var(--border);
+  background:rgba(124,92,255,.12);color:var(--ink);font-family:'Outfit',sans-serif;font-weight:600;
+  font-size:.8rem;cursor:pointer;text-decoration:none;transition:background .25s}
+.msg-btn:active{background:rgba(124,92,255,.3)}
+.cd-bubble{display:flex;gap:.55rem;margin-top:.55rem}
+.cd-cell{flex:1;background:rgba(11,15,22,.6);border:1px solid var(--border);border-radius:12px;
+  padding:.5rem .2rem;text-align:center}
+.cd-n{font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums;color:#9EC8FF}
+.cd-l{font-size:.58rem;letter-spacing:.1em;color:var(--ink-dim);text-transform:uppercase}
+.mapa-mini{margin-top:.55rem;border-radius:14px;overflow:hidden;border:1px solid var(--border);
   background:
     repeating-linear-gradient(0deg,rgba(74,159,255,.07) 0 1px,transparent 1px 22px),
     repeating-linear-gradient(90deg,rgba(74,159,255,.07) 0 1px,transparent 1px 22px),
@@ -142,8 +129,6 @@ body{
   animation:pinB 1.6s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
 @keyframes pinB{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-120%)}}
 .mapa-ruta{position:absolute;inset:0}
-
-/* nota de voz */
 .audio-b{display:flex;align-items:center;gap:.7rem;min-width:210px}
 .audio-play{width:38px;height:38px;flex:0 0 38px;border-radius:50%;border:none;cursor:pointer;
   background:linear-gradient(135deg,var(--violeta),var(--azul));color:#fff;font-size:.9rem;
@@ -155,20 +140,14 @@ body{
 @keyframes wv{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.4)}}
 .audio-dur{font-size:.7rem;color:var(--ink-dim)}
 .audio-cap{margin-top:.5rem;font-size:.8rem;color:var(--ink-dim);font-style:italic;display:none}
-
-/* chips de dress code */
 .chips-b{display:flex;gap:.7rem;margin-top:.6rem}
 .chip-b{display:flex;flex-direction:column;align-items:center;gap:.3rem;font-size:.6rem;
   color:var(--ink-dim);letter-spacing:.06em}
 .chip-b i{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);
   box-shadow:0 0 12px var(--glow,transparent)}
-
-/* burbuja de premio */
-.msg.premio-b{background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid #FFC93C;
+.msg.premio-b{background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid var(--oro);
   box-shadow:0 0 30px rgba(255,201,60,.35)}
-.premio-tit{font-weight:800;font-size:1.1rem;color:#FFC93C}
-
-/* barra de opciones / input */
+.premio-tit{font-weight:800;font-size:1.1rem;color:var(--oro)}
 #barra{flex:0 0 auto;padding:10px 12px max(env(safe-area-inset-bottom),12px);
   background:var(--header);border-top:1px solid rgba(255,255,255,.06)}
 #opciones{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:flex-end}
@@ -181,6 +160,9 @@ body{
 .opcion:hover{background:rgba(124,92,255,.22);transform:translateY(-2px)}
 .opcion:active{transform:scale(.96)}
 .opcion.primaria{background:linear-gradient(110deg,var(--violeta),var(--azul));border:none;color:#fff}
+.opcion.mega{width:100%;justify-content:center;text-align:center;font-size:1.02rem;padding:1rem;
+  box-shadow:0 0 26px rgba(124,92,255,.55);animation:opIn .4s backwards, megaGlow 1.4s ease-in-out infinite}
+@keyframes megaGlow{0%,100%{box-shadow:0 0 18px rgba(124,92,255,.45)}50%{box-shadow:0 0 40px rgba(74,159,255,.8)}}
 #form-inline{display:none;flex-direction:column;gap:.55rem}
 .in-chat{width:100%;padding:.85rem 1rem;min-height:48px;border-radius:14px;
   border:1.5px solid var(--border);background:rgba(255,255,255,.05);color:var(--ink);
@@ -188,17 +170,109 @@ body{
 .in-chat:focus{border-color:var(--azul)}
 .in-chat::placeholder{color:rgba(234,240,250,.4)}
 #barra .vacia{color:var(--ink-dim);font-size:.8rem;text-align:center;padding:.4rem}
-
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
   background:var(--bg2);border:1px solid var(--border);color:var(--ink);border-radius:12px;
   padding:.75rem 1.3rem;font-size:.84rem;z-index:90;opacity:0;pointer-events:none;
   transition:all .4s;box-shadow:0 14px 40px rgba(0,0,0,.55);max-width:88vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ══════════════════════════════════════════════
+   ACTO 2 — LA FIESTA (invitación completa)
+   ══════════════════════════════════════════════ */
+#fiesta{display:none;position:relative;z-index:5}
+body.modo-fiesta #fiesta{display:block}
+#fcanvas{position:fixed;inset:0;z-index:1}
+#fiesta .contenido{position:relative;z-index:3}
+#fmute{position:fixed;top:max(env(safe-area-inset-top),14px);right:14px;z-index:50;
+  width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);cursor:pointer;
+  background:rgba(11,15,22,.7);color:var(--ink);font-size:1.1rem;backdrop-filter:blur(8px)}
+.fs{min-height:60svh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:3.4rem 1.3rem;text-align:center}
+.rev{opacity:0;transform:translateY(34px);transition:opacity .8s,transform .8s}
+.rev.on{opacity:1;transform:none}
+
+/* Hero */
+#fs-hero{min-height:100svh;padding-top:4.5rem}
+.hero-tag{font-size:.72rem;letter-spacing:.4em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:1rem}
+.hero-nombre{font-family:'Bebas Neue',cursive;font-size:clamp(88px,30vw,190px);line-height:.88;
+  color:var(--azul);display:inline-block;transform:perspective(400px) rotateX(-7deg);
+  text-shadow:0 0 3px #fff,0 0 10px var(--azul),0 0 26px var(--azul),0 0 60px var(--violeta),
+    2px 3px 0 #2E64A3,4px 6px 0 #234B7A,6px 9px 0 #193754,8px 12px 0 #10233A,0 16px 24px rgba(0,0,0,.85);
+  transition:text-shadow .07s,transform .07s}
+.hero-nombre.beat{transform:perspective(400px) rotateX(-7deg) scale(1.035);
+  text-shadow:0 0 5px #fff,0 0 16px var(--azul),0 0 40px var(--azul),0 0 90px var(--violeta),
+    2px 3px 0 #2E64A3,4px 6px 0 #234B7A,6px 9px 0 #193754,8px 12px 0 #10233A,0 18px 30px rgba(0,0,0,.9)}
+.hero-edad{font-family:'Bebas Neue',cursive;font-size:clamp(46px,13vw,84px);color:var(--oro);
+  text-shadow:0 0 16px rgba(255,201,60,.7);margin-top:.4rem}
+.hero-fecha{margin-top:1rem;font-size:.95rem;color:var(--ink-dim);letter-spacing:.12em}
+#waveform{display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:1.6rem}
+#waveform span{width:5px;border-radius:3px;background:var(--azul);
+  box-shadow:0 0 8px rgba(74,159,255,.7);transition:height .09s,opacity .09s}
+.scroll-hint{margin-top:2.4rem;font-size:.72rem;letter-spacing:.2em;color:var(--ink-dim);
+  animation:hintB 1.8s ease-in-out infinite}
+@keyframes hintB{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(8px);opacity:1}}
+
+/* Entrada / ticket */
+.ticket{width:100%;max-width:420px;border-radius:22px;overflow:hidden;text-align:left;
+  background:linear-gradient(155deg,#151F31,#0E1524);border:1.5px solid var(--border);
+  box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 40px rgba(124,92,255,.18)}
+.tk-head{padding:1rem 1.3rem;background:linear-gradient(110deg,var(--violeta),var(--azul));
+  display:flex;justify-content:space-between;align-items:center;color:#fff}
+.tk-head b{font-family:'Bebas Neue',cursive;font-size:1.35rem;letter-spacing:.08em}
+.tk-head span{font-size:.68rem;letter-spacing:.2em;opacity:.85}
+.tk-body{padding:1.2rem 1.3rem;border-bottom:2px dashed rgba(255,255,255,.15)}
+.tk-nom{font-family:'Bebas Neue',cursive;font-size:2rem;letter-spacing:.04em;line-height:1}
+.tk-estado{display:inline-block;margin-top:.55rem;padding:.3rem .8rem;border-radius:999px;
+  font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.tk-estado.ok{background:rgba(61,220,132,.15);color:var(--verde);border:1px solid rgba(61,220,132,.4)}
+.tk-estado.no{background:rgba(255,120,120,.12);color:#FF9B9B;border:1px solid rgba(255,120,120,.35)}
+.tk-rows{padding:1rem 1.3rem 1.2rem;display:flex;flex-direction:column;gap:.55rem}
+.tk-row{display:flex;justify-content:space-between;gap:1rem;font-size:.86rem}
+.tk-row span{color:var(--ink-dim)}
+.tk-row b{font-weight:600;text-align:right}
+.tk-premio{margin:0 1.3rem 1.2rem;padding:.7rem .9rem;border-radius:12px;text-align:center;font-size:.82rem;
+  background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid var(--oro);color:var(--oro);font-weight:700}
+.btn-fiesta{margin-top:1.4rem;padding:1rem 1.8rem;min-height:48px;border-radius:999px;border:none;cursor:pointer;
+  background:linear-gradient(110deg,var(--violeta),var(--azul));color:#fff;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:.98rem;
+  box-shadow:0 12px 34px rgba(124,92,255,.45);transition:transform .2s}
+.btn-fiesta:active{transform:scale(.96)}
+.banner-perdida{max-width:420px;margin-bottom:1.2rem;padding:.85rem 1.1rem;border-radius:14px;
+  background:rgba(255,120,120,.08);border:1px solid rgba(255,120,120,.3);color:#FFB4B4;font-size:.88rem}
+
+/* Secciones info */
+.fs-tit{font-family:'Bebas Neue',cursive;font-size:clamp(38px,9vw,58px);letter-spacing:.06em;
+  color:var(--ink);text-shadow:0 0 22px rgba(124,92,255,.55);margin-bottom:1.6rem}
+.cards{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;width:100%;max-width:520px}
+.card-3d{flex:1 1 140px;min-width:140px;padding:1.3rem 1rem;border-radius:18px;
+  background:rgba(19,28,42,.82);border:1.5px solid var(--border);backdrop-filter:blur(6px);
+  box-shadow:0 16px 44px rgba(0,0,0,.5);transition:transform .18s;will-change:transform}
+.card-ico{font-size:1.7rem;margin-bottom:.5rem}
+.card-lbl{font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-dim)}
+.card-val{font-weight:700;font-size:1.08rem;margin-top:.25rem;line-height:1.3}
+.cdf{display:flex;gap:.7rem;width:100%;max-width:440px}
+.cdf-cell{flex:1;background:rgba(19,28,42,.85);border:1.5px solid var(--border);border-radius:16px;
+  padding:1rem .3rem;box-shadow:0 12px 34px rgba(0,0,0,.45)}
+.cdf-n{font-family:'Bebas Neue',cursive;font-size:clamp(34px,9vw,52px);color:#9EC8FF;
+  text-shadow:0 0 18px rgba(74,159,255,.6);font-variant-numeric:tabular-nums;line-height:1}
+.cdf-l{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin-top:.3rem}
+.mapas-btns{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.2rem}
+.mapa-link{padding:.85rem 1.3rem;min-height:48px;display:flex;align-items:center;border-radius:999px;
+  border:1.5px solid var(--border);background:rgba(124,92,255,.1);color:var(--ink);
+  font-weight:600;font-size:.88rem;text-decoration:none;transition:background .25s}
+.mapa-link:active{background:rgba(124,92,255,.3)}
+.dress-chips{display:flex;gap:1.1rem;justify-content:center;margin-top:.4rem}
+.dress-chips .chip-b{font-size:.66rem}
+.dress-chips .chip-b i{width:44px;height:44px}
+.fnote{margin-top:1rem;font-size:.86rem;color:var(--ink-dim)}
+footer{position:relative;z-index:3;text-align:center;padding:2.6rem 1.3rem 3.4rem;font-size:.78rem;color:var(--ink-dim)}
+footer a{color:var(--violeta);text-decoration:none;font-weight:600}
 </style>
 </head>
 <body>
 
 <canvas id="confetti-canvas"></canvas>
+<div id="flash"></div>
 
 <!-- ══════════ NOTIFICACIÓN ══════════ -->
 <div id="notif">
@@ -216,7 +290,7 @@ body{
   </div>
 </div>
 
-<!-- ══════════ CHAT ══════════ -->
+<!-- ══════════ ACTO 1: CHAT ══════════ -->
 <div id="app">
   <div class="chat-header">
     <div class="avatar">E</div>
@@ -231,6 +305,91 @@ body{
     <div id="opciones"><div class="vacia">Enzo está escribiendo…</div></div>
     <div id="form-inline"></div>
   </div>
+</div>
+
+<!-- ══════════ ACTO 2: LA FIESTA ══════════ -->
+<div id="fiesta">
+  <canvas id="fcanvas"></canvas>
+  <button id="fmute" onclick="toggleAudio()" aria-label="Silenciar">🔊</button>
+  <div class="contenido">
+
+    <section class="fs" id="fs-hero">
+      <div class="hero-tag">14 · 11 · 2026 — Depósito Cero</div>
+      <div class="hero-nombre" id="hero-nombre">ENZO</div>
+      <div class="hero-edad">— 18 —</div>
+      <div class="hero-fecha">LA NOCHE EMPIEZA 22:00 HS</div>
+      <div id="waveform"></div>
+      <div class="scroll-hint">▼ DESLIZÁ ▼</div>
+    </section>
+
+    <section class="fs rev" id="fs-ticket">
+      <div class="banner-perdida" id="banner-perdida" style="display:none">
+        😢 Dijiste que no venías… esto es lo que te vas a perder. Todavía estás a tiempo 👇
+      </div>
+      <div class="ticket">
+        <div class="tk-head"><b>LOS 18 DE ENZO</b><span>Nº 0018</span></div>
+        <div class="tk-body">
+          <div class="tk-nom" id="tk-nom">INVITADO/A</div>
+          <span class="tk-estado ok" id="tk-estado">✔ Confirmado/a</span>
+        </div>
+        <div class="tk-rows">
+          <div class="tk-row"><span>Fecha</span><b>14 de noviembre · 22:00</b></div>
+          <div class="tk-row"><span>Lugar</span><b>Depósito Cero, Adrogué</b></div>
+          <div class="tk-row" id="tk-menu-row" style="display:none"><span>Menú</span><b id="tk-menu"></b></div>
+          <div class="tk-row" id="tk-cancion-row" style="display:none"><span>Tu tema en la playlist</span><b id="tk-cancion"></b></div>
+          <div class="tk-row"><span>Quiz</span><b id="tk-quiz">—</b></div>
+        </div>
+        <div class="tk-premio" id="tk-premio" style="display:none">🏆 Premio pendiente — mostrá esta entrada en la fiesta</div>
+      </div>
+      <button class="btn-fiesta" id="btn-arrepenti" style="display:none" onclick="cambiarAVoy()">🔄 Me arrepentí… ¡VOY! 🎉</button>
+      <button class="btn-fiesta" onclick="descargarICS()">📆 Agendar en mi calendario</button>
+    </section>
+
+    <section class="fs rev">
+      <div class="fs-tit">LOS DATOS</div>
+      <div class="cards">
+        <div class="card-3d"><div class="card-ico">📅</div><div class="card-lbl">Fecha</div><div class="card-val">14 de noviembre</div></div>
+        <div class="card-3d"><div class="card-ico">⏰</div><div class="card-lbl">Hora</div><div class="card-val">22:00 hs</div></div>
+        <div class="card-3d"><div class="card-ico">📍</div><div class="card-lbl">Lugar</div><div class="card-val">Depósito Cero</div></div>
+      </div>
+    </section>
+
+    <section class="fs rev">
+      <div class="fs-tit">FALTA CADA VEZ MENOS</div>
+      <div class="cdf">
+        <div class="cdf-cell"><div class="cdf-n" data-fcd="d">--</div><div class="cdf-l">días</div></div>
+        <div class="cdf-cell"><div class="cdf-n" data-fcd="h">--</div><div class="cdf-l">horas</div></div>
+        <div class="cdf-cell"><div class="cdf-n" data-fcd="m">--</div><div class="cdf-l">min</div></div>
+        <div class="cdf-cell"><div class="cdf-n" data-fcd="s">--</div><div class="cdf-l">seg</div></div>
+      </div>
+    </section>
+
+    <section class="fs rev">
+      <div class="fs-tit">CÓMO LLEGAR</div>
+      <div class="card-3d" style="flex:none;width:100%;max-width:420px">
+        <div class="card-ico">📍</div>
+        <div class="card-val">Depósito Cero</div>
+        <div class="fnote">Av. del Portal 1808 · Adrogué</div>
+      </div>
+      <div class="mapas-btns" id="mapas-btns"></div>
+    </section>
+
+    <section class="fs rev">
+      <div class="fs-tit">DRESS CODE</div>
+      <div class="dress-chips">
+        <div class="chip-b"><i style="background:linear-gradient(135deg,#0B0F16,#1A2433);--glow:rgba(74,159,255,.35)"></i>Negro</div>
+        <div class="chip-b"><i style="background:linear-gradient(135deg,#7C5CFF,#4A9FFF);--glow:rgba(124,92,255,.5)"></i>Eléctrico</div>
+        <div class="chip-b"><i style="background:linear-gradient(135deg,#3DDC84,#1FA860);--glow:rgba(61,220,132,.5)"></i>Verde</div>
+        <div class="chip-b"><i style="background:linear-gradient(135deg,#E8ECF5,#fff);--glow:rgba(255,255,255,.35)"></i>Blanco</div>
+      </div>
+      <div class="fnote">Urbano nocturno · zapatillas sí o sí, se baila en serio 🕺</div>
+    </section>
+
+  </div>
+  <footer>
+    18 de Enzo · 14.11.2026 · Depósito Cero, Adrogué<br>
+    💜 Una experiencia de <a href="https://betherstudio.com" target="_blank" rel="noopener">Bether Studio</a>
+  </footer>
 </div>
 
 <div id="toast" role="status"></div>
@@ -255,6 +414,10 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hora = () => new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
+/* Estado del invitado — lo que dijo en el chat alimenta la fiesta */
+const YO = { nombre: '', hype: 0, quiz: 0, pleno: false, asiste: null, menu: null, cancion: null, notas: '' };
+const MENU_LBL = { 'estandar': '🍽️ Estándar', 'vegetariano': '🥗 Vegetariano', 'vegano': '🌱 Vegano', 'sin-tacc': '⚠️ Sin TACC' };
+
 let toastT;
 function toast(msg){
   const t = $('toast');
@@ -263,10 +426,15 @@ function toast(msg){
 }
 
 /* ══════════════════════════════════════════════
-   SONIDOS del chat (Web Audio, minimalistas)
+   SONIDOS (Web Audio, minimalistas)
    ══════════════════════════════════════════════ */
-let actx = null, muted = false;
-function ensureCtx(){ if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); }
+let actx = null, muted = false, mg = null;
+function ensureCtx(){
+  if(!actx){
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    mg = actx.createGain(); mg.gain.value = .22; mg.connect(actx.destination);
+  }
+}
 function pop(freq, vol){
   try{
     ensureCtx(); if(muted) return;
@@ -281,7 +449,12 @@ function pop(freq, vol){
 }
 const sndRecibir = () => pop(520, .12);
 const sndEnviar  = () => pop(760, .1);
-function toggleAudio(){ muted = !muted; $('mute-btn').textContent = muted ? '🔇' : '🔊'; }
+function toggleAudio(){
+  muted = !muted;
+  const ic = muted ? '🔇' : '🔊';
+  $('mute-btn').textContent = ic; $('fmute').textContent = ic;
+  if(mg) mg.gain.value = muted ? 0 : .22;
+}
 
 /* ══════════════════════════════════════════════
    CONFETTI overlay
@@ -342,13 +515,14 @@ function elegir(opts){
   return new Promise(res => {
     const cont = $('opciones');
     cont.innerHTML = '';
-    opts.forEach((o, i) => {
+    opts.forEach(o => {
       const b = document.createElement('button');
-      b.className = 'opcion' + (o.primaria ? ' primaria' : '');
+      b.className = 'opcion' + (o.primaria ? ' primaria' : '') + (o.mega ? ' mega' : '');
       b.textContent = o.label;
       b.onclick = () => {
         cont.innerHTML = '<div class="vacia">Enzo está escribiendo…</div>';
         if(!o.silencioso) yoDigo(o.label);
+        if(o.hype) YO.hype += o.hype;
         res(o.value ?? o.label);
       };
       cont.appendChild(b);
@@ -426,14 +600,18 @@ async function burbujaCountdown(){
       <div class="cd-cell"><div class="cd-n" data-cd="s">--</div><div class="cd-l">seg</div></div>
     </div>
   `, 'destacada');
+  iniciarCountdown(d, 'data-cd');
+}
+function iniciarCountdown(root, attr){
   const target = new Date(CFG.fechaISO).getTime();
   const pad = n => String(n).padStart(2, '0');
+  const q = k => root.querySelector(`[${attr}=${k}]`);
   setInterval(() => {
     const diff = Math.max(0, target - Date.now());
-    d.querySelector('[data-cd=d]').textContent = pad(Math.floor(diff / 864e5));
-    d.querySelector('[data-cd=h]').textContent = pad(Math.floor(diff / 36e5) % 24);
-    d.querySelector('[data-cd=m]').textContent = pad(Math.floor(diff / 6e4) % 60);
-    d.querySelector('[data-cd=s]').textContent = pad(Math.floor(diff / 1e3) % 60);
+    q('d').textContent = pad(Math.floor(diff / 864e5));
+    q('h').textContent = pad(Math.floor(diff / 36e5) % 24);
+    q('m').textContent = pad(Math.floor(diff / 6e4) % 60);
+    q('s').textContent = pad(Math.floor(diff / 1e3) % 60);
   }, 1000);
 }
 function burbujaAudio(){
@@ -448,12 +626,12 @@ function burbujaAudio(){
     <div class="audio-cap" id="audio-cap">🎧 transcripción: «vení porfa… va a ser LA fiesta del año, te lo juro por mis 18 años»</div>
   `);
 }
+let audioEscuchado = false;
 function playAudio(btn){
   const b = $('audio-b'), cap = $('audio-cap');
   if(b.classList.contains('playing')) return;
   b.classList.add('playing');
   btn.textContent = '❚❚';
-  /* "voz" sintética: secuencia de blips con cadencia de habla */
   let i = 0;
   const iv = setInterval(() => {
     pop(rnd(300, 520), .06);
@@ -463,6 +641,7 @@ function playAudio(btn){
     b.classList.remove('playing');
     btn.textContent = '▶';
     cap.style.display = 'block';
+    audioEscuchado = true;
     scrollAbajo();
   }, 4200);
 }
@@ -497,9 +676,8 @@ function descargarICS(){
 }
 
 /* ══════════════════════════════════════════════
-   EL GUION — toda la invitación como conversación
+   EL GUION — conversación con ramificación real
    ══════════════════════════════════════════════ */
-let quizScore = 0;
 async function guion(){
   await sleep(700);
   await enzoDice('ey!! 👀');
@@ -507,37 +685,76 @@ async function guion(){
   await enzoDice('tengo una noticia y no sé cómo decírtela así que la digo nomás:');
   await enzoDice('<span class="emoji-big">🎂</span><br><b>CUMPLO 18</b> y no pienso festejarlo tranquilo');
 
-  await elegir([
-    { label: 'NOOO ya 18?? 🎉' },
-    { label: 'contame TODO 👂' },
+  const r0 = await elegir([
+    { label: 'NOOO ya 18?? 🎉', value: 'sorpresa', hype: 1 },
+    { label: 'contame TODO 👂', value: 'todo', hype: 1 },
+    { label: '¿quién sos? 😳', value: 'quien' },
   ]);
+  if(r0 === 'sorpresa'){
+    await enzoDice('jajaja SÍ, una locura');
+    await enzoDice('ayer tenía 12 y hoy ya me dejan votar… un peligro para la sociedad 😎');
+  } else if(r0 === 'todo'){
+    await enzoDice('esa actitud me gusta 🔥');
+    await enzoDice('te cuento todo, pero primero…');
+  } else {
+    await enzoDice('JAJAJA cómo que quién soy');
+    await enzoDice('soy <b>ENZO</b>. E-N-Z-O. el que te va a hacer bailar toda la noche del 14 😤');
+  }
 
-  await enzoDice('jajaja sí, ya sé, ayer tenía 12');
+  /* ── captura de nombre (dentro de la ficción) ── */
+  await enzoDice('pará pará, una cosa antes 💀');
+  await enzoDice('me cambié de cel y perdí todos los contactos… ¿me decís quién sos así te agendo?');
+  const [nom] = await formInline([{ ph: 'Tu nombre', req: true, max: 40 }], '👋 Soy yo');
+  YO.nombre = nom;
+  yoDigo(`soy ${nom} 👋`);
+  await enzoDice(`<b>${nom}</b>!!! obvio, cómo no te voy a tener 😅 agendadísim@`);
   await enzoDice('bueno, los datos importantes primero 👇');
   await burbujaDatos();
   await burbujaMapa();
 
   const r1 = await elegir([
-    { label: '¿y cuánto falta? ⏱' },
-    { label: 'ya lo agendé ✅' },
+    { label: '¿y cuánto falta? ⏱', value: 'falta' },
+    { label: 'ya lo agendé ✅', value: 'agende', hype: 1 },
+    { label: 'uf, queda lejos 😩', value: 'lejos' },
   ]);
-  if(r1 === 'ya lo agendé ✅') await enzoDice('así me gusta, gente eficiente 😎');
+  if(r1 === 'agende') await enzoDice('así me gusta, gente eficiente 😎 igual mirá esto:');
+  else if(r1 === 'lejos') await enzoDice('nada queda lejos cuando la fiesta es ESTA fiesta 😤 mirá lo que falta:');
+  else await enzoDice('lo tengo calculado al segundo, mirá:');
   await burbujaCountdown();
 
   await enzoDice('te dejo un audio que lo explica mejor 🎙');
   await burbujaAudio();
 
-  await elegir([{ label: 'jaja ok ok, ¿algo más?' }]);
+  const r2 = await elegir([
+    { label: 'jaja ok ok, ¿algo más?', value: 'mas' },
+    { label: 'qué dramático 😂', value: 'drama' },
+  ]);
+  if(r2 === 'drama'){
+    await enzoDice(audioEscuchado
+      ? 'dramático yo?? te juré por mis 18 años, eso es COMPROMISO 😤'
+      : 'dramático dice… y ni escuchaste el audio 😒 bueno, seguimos:');
+  } else {
+    await enzoDice(audioEscuchado ? 'sí, falta lo más importante del outfit:' : 'sí señor/a, lo más importante:');
+  }
   await burbujaDress();
+
+  const r3 = await elegir([
+    { label: 'yo me visto así siempre 😏', value: 'siempre', hype: 1 },
+    { label: 'uf, me toca ir de compras 🛍️', value: 'compras' },
+  ]);
+  await enzoDice(r3 === 'siempre'
+    ? 'entonces sos de los míos. entrada VIP directa 😎'
+    : 'jajaja excusa perfecta para renovarte… el 14 quiero verte estrenar 👀');
 
   /* ── QUIZ ── */
   await enzoDice('ahora… una cosita más 😏');
-  await enzoDice('<b>¿cuánto me conocés?</b> 5 preguntas. si la rompés, hay <b>premio real</b> en la fiesta 🎁');
+  await enzoDice('<b>¿cuánta atención me prestaste?</b> 5 preguntas. si la rompés, hay <b>premio real</b> en la fiesta 🎁');
   const jugar = await elegir([
-    { label: 'dale, va 🔥', value: 'si', primaria: true },
+    { label: 'dale, va 🔥', value: 'si', primaria: true, hype: 1 },
     { label: 'uy no, presión…', value: 'si2' },
   ]);
   if(jugar === 'si2') await enzoDice('no hay opción de no jugar jajaja, arrancamos:');
+  else await enzoDice('me gusta la confianza. arrancamos:');
 
   const QUIZ = [
     { q: '1/5 — ¿qué día es la fiesta?', ok: '14 de noviembre 🗓', ops: ['14 de noviembre 🗓', '15 de noviembre', '¿había fiesta?'],
@@ -551,25 +768,26 @@ async function guion(){
     { q: '5/5 — la más importante: ¿qué es lo que NO puede faltar esa noche?', ok: 'VOS', ops: ['la música', 'la comida', 'VOS'],
       bien: '<span class="emoji-big">🥹</span> respuesta correcta. la única que valía doble.', mal: 'mmm técnicamente sí, pero la respuesta era <b>VOS</b> 💜 (te la doy por buena)' },
   ];
-  quizScore = 0;
+  YO.quiz = 0;
   for(const p of QUIZ){
     await enzoDice(p.q);
     const r = await elegir(p.ops.map(o => ({ label: o })));
     const acierto = r === p.ok || p.q.startsWith('5/5');
-    if(acierto) quizScore++;
+    if(acierto) YO.quiz++;
     await enzoDice(acierto ? p.bien : p.mal);
   }
-  try{ localStorage.setItem('chat-quiz', String(quizScore)); }catch(e){}
-  if(quizScore >= 4){
+  try{ localStorage.setItem('chat-quiz', String(YO.quiz)); }catch(e){}
+  if(YO.quiz >= 4){
+    YO.pleno = true;
     confetear(90);
     if(navigator.vibrate) navigator.vibrate([30, 50, 30, 50, 100]);
     await enzoDice(`
-      <div class="premio-tit">🏆 ${quizScore}/5 — GANASTE</div>
-      <div class="dest-sub">mostrame esta pantalla en la fiesta<br>y canjeala por un premio sorpresa 🎁</div>
+      <div class="premio-tit">🏆 ${YO.quiz}/5 — GANASTE</div>
+      <div class="dest-sub">te lo dejo anotado en tu entrada 🎁<br>(ya vas a ver de qué hablo…)</div>
     `, 'premio-b');
     try{ localStorage.setItem('chat-pleno', '1'); }catch(e){}
   } else {
-    await enzoDice(`${quizScore}/5… bueno, para eso está la fiesta: para conocernos mejor 😂`);
+    await enzoDice(`${YO.quiz}/5… bueno, para eso está la fiesta: para conocernos mejor 😂`);
   }
 
   /* ── PLAYLIST ── */
@@ -578,63 +796,400 @@ async function guion(){
   const [canc, art] = await formInline(
     [{ ph: 'Canción', req: true }, { ph: 'Artista', req: true }], '🎵 Mandar');
   yoDigo(`🎵 ${canc} — ${art}`);
+  YO.cancion = `${canc} — ${art}`;
   try{
     const lista = JSON.parse(localStorage.getItem('chat-playlist') || '[]');
     lista.push({ c: canc, a: art, t: Date.now() });
     localStorage.setItem('chat-playlist', JSON.stringify(lista));
   }catch(e){}
   /* ⚠ REVISAR: producción → POST Supabase extra:{cancion,artista} */
-  await enzoDice('anotadísima, va directo al DJ 📝🔥');
+  await enzoDice(`anotadísima 📝 si el DJ no la pone, ${YO.nombre}, la pongo yo a los gritos 🔥`);
 
   /* ── RSVP ── */
   await enzoDice('bueno… llegó el momento de LA pregunta 😬');
-  await enzoDice('<b>¿venís a mis 18?</b>');
+  await enzoDice(`<b>${YO.nombre}, ¿venís a mis 18?</b>`);
   const asiste = await elegir([
     { label: '🎉 OBVIO que voy', value: true, primaria: true },
     { label: '😢 no voy a poder', value: false },
   ]);
+  YO.asiste = asiste;
 
-  let menuSel = null, notas = '';
   if(asiste){
     confetear(70);
-    await enzoDice('<span class="emoji-big">🎉🎉🎉</span><br>SÍÍÍ! sabía que podía contar con vos');
+    await enzoDice(YO.hype >= 4
+      ? `<span class="emoji-big">🎉🎉🎉</span><br>SÍÍÍ! ${YO.nombre}, sos oficialmente top 3 de mis invitados`
+      : `<span class="emoji-big">🎉🎉🎉</span><br>SÍÍÍ! sabía que podía contar con vos`);
     await enzoDice('para la cena, ¿qué preferís?');
-    menuSel = await elegir([
+    YO.menu = await elegir([
       { label: '🍽️ Estándar', value: 'estandar' },
       { label: '🥗 Vegetariano', value: 'vegetariano' },
       { label: '🌱 Vegano', value: 'vegano' },
       { label: '⚠️ Sin TACC', value: 'sin-tacc' },
     ]);
-    await enzoDice('anotado ✅ ¿algo más que tenga que saber? (alergias, o lo que quieras decirme)');
-    const [n] = await formInline([{ ph: 'Escribí acá (o mandá un “nada”)', max: 300 }], '📨 Enviar');
-    notas = n;
-    if(n) yoDigo(n);
+    const rMenu = {
+      'estandar': 'clásico, respeto 🍽️ anotado',
+      'vegetariano': 'anotado 🥗 el catering ya está avisado',
+      'vegano': '🌱 hay opción vegana POSTA, no una ensalada triste, quedate tranqui',
+      'sin-tacc': 'todo controlado ⚠️ cocina aparte y sin cruces, palabra',
+    };
+    await enzoDice(rMenu[YO.menu]);
+    await enzoDice('¿algo más que tenga que saber? (alergias, o lo que quieras decirme)');
+    const [n] = await formInline([{ ph: 'Escribí acá (o mandá un "nada")', max: 300 }], '📨 Enviar');
+    YO.notas = n;
+    if(n){
+      yoDigo(n);
+      await enzoDice(/^nada\.?$/i.test(n) ? 'perfecto, cero vueltas 😎' : 'anotado, lo tengo en cuenta 🤝');
+    }
   } else {
-    await enzoDice('nooo 😭 bueno… te voy a extrañar en serio');
+    await enzoDice(`nooo ${YO.nombre} 😭 no me hagas esto`);
     await enzoDice('¿me querés dejar un mensajito al menos? 🥺');
     const [n] = await formInline([{ ph: 'Tu mensaje para Enzo…', max: 300 }], '💌 Enviar');
-    notas = n;
-    if(n) yoDigo(n);
+    YO.notas = n;
+    if(n){ yoDigo(n); await enzoDice('💜 gracias… igual te guardo un pedazo de torta, palabra'); }
   }
-  const pleno = (() => { try{ return localStorage.getItem('chat-pleno') === '1'; }catch(e){ return false; } })();
+  guardarRSVP();
+
+  /* ── LA REVELACIÓN ── */
+  if(asiste){
+    await enzoDice(`listo, quedaste <b>confirmad@</b> para el ${CFG.fechaTxt} 🎟`);
+    await sleep(900);
+    await enzoDice('pará. no cierres todavía…', null, 1100);
+    await enzoDice('esto que estuvimos haciendo… es solo un chat 👀');
+    await enzoDice('<b>la invitación DE VERDAD está atrás de esta pantalla.</b>');
+    await enzoDice('tocá el botón. y agarrate. 👇');
+    await elegir([{ label: '🎟 ABRIR MI ENTRADA', value: 'go', primaria: true, mega: true, silencioso: true }]);
+  } else {
+    await enzoDice('igual… dejame mostrarte lo que te vas a perder 😏');
+    await enzoDice('atrás de este chat hay algo más. tocá si te animás 👇');
+    await elegir([{ label: '👀 mostrame', value: 'go', primaria: true, mega: true, silencioso: true }]);
+  }
+  revelarFiesta();
+}
+
+function guardarRSVP(){
   try{
     const lista = JSON.parse(localStorage.getItem('chat-rsvp') || '[]');
-    lista.push({ evento: CFG.evento, tipo: 'cumple-18', nombre: 'Invitado/a',
-      asiste, menu: menuSel, extra: { notas: notas || null, quiz: quizScore, pleno }, t: Date.now() });
+    lista.push({ evento: CFG.evento, tipo: 'cumple-18', nombre: YO.nombre || 'Invitado/a',
+      asiste: YO.asiste, menu: YO.menu, extra: { notas: YO.notas || null, cancion: YO.cancion, quiz: YO.quiz, pleno: YO.pleno }, t: Date.now() });
     localStorage.setItem('chat-rsvp', JSON.stringify(lista));
   }catch(e){}
   /* ⚠ REVISAR: producción → POST `${supaUrl}/rest/v1/rsvp` con apikey/Bearer */
+}
 
-  if(asiste){
-    await enzoDice(`listo, quedaste <b>confirmad@</b> para el ${CFG.fechaTxt} 🎟`);
-    await enzoDice(pleno
-      ? 'y acordate: tenés un premio pendiente por el quiz 🏆 no te olvides de mostrármelo'
-      : 'nos vemos en la pista. preparate 😎');
+/* ══════════════════════════════════════════════
+   TRANSICIÓN — el chat estalla y aparece la fiesta
+   ══════════════════════════════════════════════ */
+function sndDrop(){
+  try{
+    ensureCtx(); if(muted) return;
+    const t = actx.currentTime;
+    /* riser de ruido */
+    const dur = 1.1, buf = actx.createBuffer(1, actx.sampleRate * dur, actx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (i / d.length);
+    const src = actx.createBufferSource(); src.buffer = buf;
+    const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(4200, t + dur);
+    const g = actx.createGain(); g.gain.setValueAtTime(.001, t);
+    g.gain.exponentialRampToValueAtTime(.3, t + dur); g.gain.exponentialRampToValueAtTime(.001, t + dur + .15);
+    src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t);
+    /* caída de sub al final */
+    const o = actx.createOscillator(), g2 = actx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(160, t + dur);
+    o.frequency.exponentialRampToValueAtTime(38, t + dur + .5);
+    g2.gain.setValueAtTime(.55, t + dur); g2.gain.exponentialRampToValueAtTime(.001, t + dur + .8);
+    o.connect(g2); g2.connect(actx.destination); o.start(t + dur); o.stop(t + dur + .9);
+  }catch(e){}
+}
+
+let revelada = false;
+function revelarFiesta(){
+  if(revelada) return; revelada = true;
+  sndDrop();
+  const app = $('app');
+  app.classList.add('tiembla');
+  /* las burbujas salen volando */
+  setTimeout(() => {
+    document.querySelectorAll('#mensajes .msg').forEach((m, i) => {
+      m.style.transition = `transform .9s cubic-bezier(.55,-.35,.55,1) ${i * 28}ms, opacity .85s ${i * 28}ms`;
+      m.style.transform = `translate(${rnd(-160, 160)}px, ${rnd(-560, -180)}px) rotate(${rnd(-160, 160)}deg) scale(.25)`;
+      m.style.opacity = 0;
+    });
+  }, 500);
+  setTimeout(() => {
+    $('flash').style.opacity = 1;
+    if(navigator.vibrate) navigator.vibrate([60, 40, 120]);
+  }, 1150);
+  setTimeout(() => {
+    app.classList.add('fuera');
+    document.body.classList.add('modo-fiesta');
+    prepararTicket();
+    iniciarFiesta();
+    scrollTo(0, 0);
+    $('flash').style.opacity = 0;
+    confetear(150);
+  }, 1350);
+  setTimeout(() => { app.style.display = 'none'; }, 2000);
+}
+
+/* ══════════════════════════════════════════════
+   TICKET personalizado con lo que dijiste
+   ══════════════════════════════════════════════ */
+function prepararTicket(){
+  $('tk-nom').textContent = (YO.nombre || 'Invitado/a').toUpperCase();
+  $('tk-quiz').textContent = `${YO.quiz}/5` + (YO.pleno ? ' 🏆' : '');
+  if(YO.cancion){ $('tk-cancion-row').style.display = 'flex'; $('tk-cancion').textContent = YO.cancion; }
+  if(YO.pleno) $('tk-premio').style.display = 'block';
+  if(YO.asiste){
+    if(YO.menu){ $('tk-menu-row').style.display = 'flex'; $('tk-menu').textContent = MENU_LBL[YO.menu] || YO.menu; }
   } else {
-    await enzoDice('gracias por avisarme 💜 igual te guardo un pedazo de torta, palabra');
+    const e = $('tk-estado');
+    e.className = 'tk-estado no'; e.textContent = '✖ Dijiste que no…';
+    $('banner-perdida').style.display = 'block';
+    $('btn-arrepenti').style.display = 'inline-block';
   }
-  await enzoDice('cualquier cosa me escribís por acá 👋', null, 900);
-  $('opciones').innerHTML = '<div class="vacia">💜 Una experiencia de Bether Studio · betherstudio.com</div>';
+  /* 3 deep-links de mapas */
+  const q = encodeURIComponent(CFG.direccion);
+  $('mapas-btns').innerHTML = `
+    <a class="mapa-link" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">🗺️ Google Maps</a>
+    <a class="mapa-link" href="https://waze.com/ul?q=${q}&navigate=yes" target="_blank" rel="noopener">🚗 Waze</a>
+    <a class="mapa-link" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">🍎 Apple Maps</a>`;
+}
+function cambiarAVoy(){
+  YO.asiste = true;
+  guardarRSVP(); /* ⚠ REVISAR: producción → UPDATE en vez de nuevo insert */
+  const e = $('tk-estado');
+  e.className = 'tk-estado ok'; e.textContent = '✔ Confirmado/a';
+  $('banner-perdida').style.display = 'none';
+  $('btn-arrepenti').style.display = 'none';
+  confetear(120);
+  if(navigator.vibrate) navigator.vibrate([30, 50, 30, 50, 100]);
+  toast(`🎉 ESO, ${YO.nombre}! Enzo va a estar feliz`);
+}
+
+/* ══════════════════════════════════════════════
+   LA FIESTA — canvas + beat generativo sutil
+   ══════════════════════════════════════════════ */
+let F = { on: false, kick: 0, hi: 0, t: 0, last: 0, step: 0 };
+const PAL = ['#7C5CFF', '#4A9FFF', '#3DDC84', '#FFC93C'];
+
+function iniciarFiesta(){
+  if(F.on) return; F.on = true;
+  initFCanvas();
+  iniciarBeat();
+  construirWaveform();
+  iniciarCountdown($('fiesta'), 'data-fcd');
+  initTilt();
+  initReveals();
+}
+
+/* — beat electrónico SUTIL (volumen bajo, sin saturar) — */
+const KICK_P = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,1];
+const HAT_P  = [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,1,1,0];
+const BASS_P = [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0];
+const BASS_N = [55, 55, 65.4, 49];
+let bassIdx = 0, noiseBuf = null;
+function iniciarBeat(){
+  ensureCtx();
+  if(!noiseBuf){
+    noiseBuf = actx.createBuffer(1, actx.sampleRate * .1, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const BPM = 124;
+  setInterval(() => {
+    const s = F.step % 16;
+    if(KICK_P[s]){
+      F.kick = 1.2;
+      const hn = $('hero-nombre');
+      hn.classList.add('beat'); setTimeout(() => hn.classList.remove('beat'), 90);
+      if(!muted){
+        const t = actx.currentTime;
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(110, t);
+        o.frequency.exponentialRampToValueAtTime(42, t + .22);
+        g.gain.setValueAtTime(.5, t); g.gain.exponentialRampToValueAtTime(.001, t + .26);
+        o.connect(g); g.connect(mg); o.start(t); o.stop(t + .3);
+      }
+    }
+    if(HAT_P[s]){
+      F.hi = .8;
+      if(!muted){
+        const t = actx.currentTime;
+        const src = actx.createBufferSource(); src.buffer = noiseBuf;
+        const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7500;
+        const g = actx.createGain(); g.gain.setValueAtTime(.12, t);
+        g.gain.exponentialRampToValueAtTime(.001, t + .05);
+        src.connect(f); f.connect(g); g.connect(mg); src.start(t);
+      }
+    }
+    if(BASS_P[s] && !muted){
+      const t = actx.currentTime;
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'triangle'; o.frequency.value = BASS_N[bassIdx++ % BASS_N.length];
+      g.gain.setValueAtTime(.14, t); g.gain.exponentialRampToValueAtTime(.001, t + .3);
+      o.connect(g); g.connect(mg); o.start(t); o.stop(t + .32);
+    }
+    F.step++;
+  }, (60 / BPM / 4) * 1000);
+}
+
+/* — waveform beat-reactivo del hero — */
+const WF_H = [8, 14, 22, 30, 24, 16, 8, 20, 32, 24, 12, 28, 16, 10, 24];
+function construirWaveform(){
+  const w = $('waveform');
+  WF_H.forEach(() => w.appendChild(document.createElement('span')));
+}
+
+/* — canvas de la fiesta: 8 capas, delta-time — */
+let fcv, fctx, FW, FH, sparks = [];
+function initFCanvas(){
+  fcv = $('fcanvas'); fctx = fcv.getContext('2d');
+  const rs = () => { FW = fcv.width = innerWidth; FH = fcv.height = innerHeight; };
+  rs(); addEventListener('resize', rs);
+  for(let i = 0; i < 34; i++) sparks.push({
+    x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+    v: rnd(.15, .6), s: rnd(1, 2.6), c: PAL[(Math.random() * 4) | 0], ph: rnd(0, 6.28) });
+  requestAnimationFrame(fframe);
+}
+function fframe(now = performance.now()){
+  const dt = Math.min((now - F.last) / 16.67, 2.5);
+  F.last = now; F.t += dt;
+  F.kick = Math.max(0, F.kick - .055 * dt);
+  F.hi = Math.max(0, F.hi - .08 * dt);
+  const k = F.kick, t = F.t;
+  const cx = FW / 2, by = Math.min(FH * .17, 150);
+
+  /* 1 — fondo */
+  const bg = fctx.createLinearGradient(0, 0, 0, FH);
+  bg.addColorStop(0, '#0D1220'); bg.addColorStop(.6, '#0B0F16'); bg.addColorStop(1, '#070A10');
+  fctx.fillStyle = bg; fctx.fillRect(0, 0, FW, FH);
+
+  /* 2 — luces de ambiente orbitando */
+  for(let i = 0; i < 5; i++){
+    const a = t * .006 * (i % 2 ? 1 : -1) + i * 1.3;
+    const lx = cx + Math.cos(a) * FW * .42, ly = FH * .45 + Math.sin(a) * FH * .3;
+    const r = FW * .3;
+    const g = fctx.createRadialGradient(lx, ly, 0, lx, ly, r);
+    g.addColorStop(0, PAL[i % 4] + '26'); g.addColorStop(1, 'transparent');
+    fctx.globalAlpha = .5 + k * .5;
+    fctx.fillStyle = g; fctx.fillRect(lx - r, ly - r, r * 2, r * 2);
+  }
+  fctx.globalAlpha = 1;
+
+  /* 3 — bola de espejos + lásers */
+  const br = Math.min(FW * .085, 44) * (1 + k * .05);
+  fctx.strokeStyle = 'rgba(160,190,255,.5)'; fctx.lineWidth = 1.5;
+  fctx.beginPath(); fctx.moveTo(cx, 0); fctx.lineTo(cx, by - br); fctx.stroke();
+  for(let i = 0; i < 6; i++){
+    const a = t * .012 + i * Math.PI / 3;
+    fctx.save(); fctx.translate(cx, by); fctx.rotate(a);
+    const lg = fctx.createLinearGradient(0, 0, 0, FH);
+    lg.addColorStop(0, PAL[i % 4] + (k > .4 ? '55' : '2E')); lg.addColorStop(1, 'transparent');
+    fctx.fillStyle = lg;
+    fctx.beginPath(); fctx.moveTo(0, 0); fctx.lineTo(-FH * .06, FH); fctx.lineTo(FH * .06, FH);
+    fctx.closePath(); fctx.fill(); fctx.restore();
+  }
+  const bgr = fctx.createRadialGradient(cx - br * .3, by - br * .3, br * .1, cx, by, br);
+  bgr.addColorStop(0, '#E8F0FF'); bgr.addColorStop(.5, '#8FA8CE'); bgr.addColorStop(1, '#3A4A66');
+  fctx.fillStyle = bgr;
+  fctx.beginPath(); fctx.arc(cx, by, br, 0, 6.29); fctx.fill();
+  fctx.strokeStyle = 'rgba(255,255,255,.25)'; fctx.lineWidth = 1;
+  for(let i = -2; i <= 2; i++){
+    fctx.beginPath(); fctx.ellipse(cx, by, br, Math.abs(br * i / 2.6) + .1, 0, 0, 6.29); fctx.stroke();
+    fctx.beginPath(); fctx.ellipse(cx, by, Math.abs(br * i / 2.6) + .1, br, 0, 0, 6.29); fctx.stroke();
+  }
+  if(((t * .05) | 0) % 3 === 0){
+    fctx.fillStyle = 'rgba(255,255,255,.9)';
+    fctx.beginPath();
+    fctx.arc(cx + Math.cos(t * .11) * br * .6, by + Math.sin(t * .13) * br * .5, 2.2 + k * 2, 0, 6.29);
+    fctx.fill();
+  }
+
+  /* 4 — shockwave en el kick */
+  if(k > .05){
+    const sr = (1.2 - k) * Math.max(FW, FH) * .55;
+    fctx.strokeStyle = `rgba(124,92,255,${k * .5})`;
+    fctx.lineWidth = 2 + k * 5;
+    fctx.beginPath(); fctx.arc(cx, FH * .5, sr, 0, 6.29); fctx.stroke();
+  }
+
+  /* 5 — barras EQ en el piso */
+  const nB = Math.max(10, (FW / 30) | 0), bw = FW / nB;
+  for(let i = 0; i < nB; i++){
+    const h = (14 + Math.abs(Math.sin(i * 1.7 + t * .06)) * 34) * (1 + k * 1.9 + F.hi * .5);
+    fctx.fillStyle = PAL[i % 4] + '59';
+    fctx.fillRect(i * bw + 2, FH - h, bw - 4, h);
+  }
+
+  /* 6 — público saltando */
+  const nC = Math.max(6, (FW / 60) | 0), cw = FW / nC;
+  fctx.fillStyle = 'rgba(6,9,14,.94)';
+  for(let i = 0; i < nC; i++){
+    const px = i * cw + cw / 2;
+    const jump = k * (i % 3 === 0 ? 20 : 11) + Math.sin(t * .08 + i * 2.1) * 3;
+    const py = FH - 26 - jump;
+    fctx.beginPath(); fctx.arc(px, py - 34, 11, 0, 6.29); fctx.fill();
+    fctx.beginPath();
+    fctx.moveTo(px - 15, FH + 2); fctx.quadraticCurveTo(px - 17, py - 20, px, py - 22);
+    fctx.quadraticCurveTo(px + 17, py - 20, px + 15, FH + 2); fctx.fill();
+    if(i % 2 === 0){
+      fctx.strokeStyle = 'rgba(6,9,14,.94)'; fctx.lineWidth = 5; fctx.lineCap = 'round';
+      const aa = Math.sin(t * .1 + i) * .4;
+      fctx.beginPath(); fctx.moveTo(px - 10, py - 22);
+      fctx.lineTo(px - 22 - k * 5, py - 46 - k * 9 + aa * 8); fctx.stroke();
+      fctx.beginPath(); fctx.moveTo(px + 10, py - 22);
+      fctx.lineTo(px + 22 + k * 5, py - 48 - k * 9 - aa * 8); fctx.stroke();
+    }
+  }
+
+  /* 7 — partículas flotando */
+  for(const s of sparks){
+    s.y -= s.v * dt; s.x += Math.sin(t * .02 + s.ph) * .3 * dt;
+    if(s.y < -8){ s.y = FH + 8; s.x = Math.random() * FW; }
+    fctx.globalAlpha = .35 + Math.sin(t * .05 + s.ph) * .25 + k * .3;
+    fctx.fillStyle = s.c;
+    fctx.beginPath(); fctx.arc(s.x, s.y, s.s * (1 + k * .4), 0, 6.29); fctx.fill();
+  }
+  fctx.globalAlpha = 1;
+
+  /* 8 — waveform DOM del hero, actualizado acá */
+  const bars = $('waveform').children;
+  for(let i = 0; i < bars.length; i++){
+    const h = WF_H[i] * (1 + k * 2.8 + F.hi * .8);
+    bars[i].style.height = Math.max(3, h) + 'px';
+    bars[i].style.opacity = .5 + k * .5;
+  }
+
+  requestAnimationFrame(fframe);
+}
+
+/* — tilt 3D en cards — */
+function initTilt(){
+  document.querySelectorAll('.card-3d').forEach(c => {
+    c.addEventListener('mousemove', e => {
+      const r = c.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      c.style.transform = `perspective(600px) rotateX(${-y * 12}deg) rotateY(${x * 12}deg) scale(1.02)`;
+    });
+    c.addEventListener('mouseleave', () => { c.style.transform = ''; });
+    c.addEventListener('touchmove', e => {
+      const tt = e.touches[0], r = c.getBoundingClientRect();
+      const x = (tt.clientX - r.left) / r.width - .5;
+      const y = (tt.clientY - r.top) / r.height - .5;
+      c.style.transform = `perspective(600px) rotateX(${-y * 8}deg) rotateY(${x * 8}deg)`;
+    }, { passive: true });
+    c.addEventListener('touchend', () => { c.style.transform = ''; });
+  });
+}
+
+/* — scroll reveals — */
+function initReveals(){
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); }
+  }), { threshold: .18 });
+  document.querySelectorAll('.rev').forEach(el => io.observe(el));
 }
 
 /* ══════════════════════════════════════════════
