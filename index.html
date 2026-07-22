@@ -81,16 +81,28 @@ body.modo-fiesta{overflow:auto;height:auto}
 #app.tiembla{animation:shk .1s linear 12}
 @keyframes shk{0%{transform:translate(0,0)}25%{transform:translate(-6px,4px)}50%{transform:translate(5px,-5px)}75%{transform:translate(-4px,-4px)}100%{transform:translate(4px,5px)}}
 #app.fuera{opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s}
-.chat-header{flex:0 0 auto;display:flex;align-items:center;gap:.8rem;
+.chat-header{flex:0 0 auto;display:flex;align-items:center;gap:.8rem;position:relative;z-index:3;
   padding:max(env(safe-area-inset-top),12px) 14px 12px;background:var(--header);
   border-bottom:1px solid rgba(255,255,255,.06)}
+/* wallpaper del chat */
+#chat-deco{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;
+  background:
+    radial-gradient(60% 42% at 12% 18%, rgba(124,92,255,.12), transparent 70%),
+    radial-gradient(52% 38% at 88% 68%, rgba(74,159,255,.10), transparent 70%),
+    radial-gradient(46% 30% at 50% 100%, rgba(61,220,132,.06), transparent 70%)}
+#chat-deco::before{content:"18";position:absolute;right:-6%;top:30%;
+  font-family:'Bebas Neue',cursive;font-size:44vh;line-height:1;
+  color:rgba(124,92,255,.06);transform:rotate(9deg)}
+.deco-g{position:absolute;font-size:1.15rem;opacity:.11;filter:saturate(.7);
+  animation:decoF var(--d,15s) ease-in-out infinite alternate}
+@keyframes decoF{0%{transform:translateY(0) rotate(-9deg)}100%{transform:translateY(-28px) rotate(11deg)}}
 .chat-header .avatar{width:42px;height:42px;flex:0 0 42px;font-size:1.15rem}
 .ch-info{flex:1;min-width:0}
 .ch-nombre{font-weight:700;font-size:1rem}
 .ch-estado{font-size:.72rem;color:var(--verde)}
 .ch-icons button{background:none;border:none;color:var(--ink);font-size:1.15rem;cursor:pointer;padding:.4rem}
 #mensajes{flex:1;overflow-y:auto;padding:1rem .9rem 1.2rem;display:flex;flex-direction:column;gap:.55rem;
-  scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+  scroll-behavior:smooth;-webkit-overflow-scrolling:touch;position:relative;z-index:2}
 .msg{max-width:82%;padding:.7rem .95rem;border-radius:18px;font-size:.94rem;line-height:1.45;
   position:relative;animation:msgIn .35s cubic-bezier(.2,1.3,.4,1)}
 @keyframes msgIn{0%{transform:translateY(14px) scale(.94);opacity:0}100%{transform:none;opacity:1}}
@@ -148,7 +160,7 @@ body.modo-fiesta{overflow:auto;height:auto}
 .msg.premio-b{background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid var(--oro);
   box-shadow:0 0 30px rgba(255,201,60,.35)}
 .premio-tit{font-weight:800;font-size:1.1rem;color:var(--oro)}
-#barra{flex:0 0 auto;padding:10px 12px max(env(safe-area-inset-bottom),12px);
+#barra{flex:0 0 auto;padding:10px 12px max(env(safe-area-inset-bottom),12px);position:relative;z-index:3;
   background:var(--header);border-top:1px solid rgba(255,255,255,.06)}
 #opciones{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:flex-end}
 .opcion{padding:.75rem 1.15rem;min-height:48px;border-radius:999px;border:1.5px solid var(--border);
@@ -267,6 +279,25 @@ body.modo-fiesta #fiesta{display:block}
 .fnote{margin-top:1rem;font-size:.86rem;color:var(--ink-dim)}
 footer{position:relative;z-index:3;text-align:center;padding:2.6rem 1.3rem 3.4rem;font-size:.78rem;color:var(--ink-dim)}
 footer a{color:var(--violeta);text-decoration:none;font-weight:600}
+
+/* ══════════════════════════════════════════════
+   REDUCED MOTION — celulares con animaciones
+   bloqueadas (accesibilidad o ajustes de
+   desarrollador en Android). Chrome mapea la
+   escala de animación en 0 a esta media query.
+   NADA crítico depende de que una animación CSS
+   termine: todo cambio de escena va por timers JS.
+   ══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important}
+  .rev{opacity:1;transform:none}
+  .scroll-hint,.notif-badge,.mapa-pin,.deco-g{animation:none}
+  .opcion.mega{box-shadow:0 0 26px rgba(124,92,255,.55)}
+}
 </style>
 </head>
 <body>
@@ -292,6 +323,7 @@ footer a{color:var(--violeta);text-decoration:none;font-weight:600}
 
 <!-- ══════════ ACTO 1: CHAT ══════════ -->
 <div id="app">
+  <div id="chat-deco" aria-hidden="true"></div>
   <div class="chat-header">
     <div class="avatar">E</div>
     <div class="ch-info">
@@ -335,7 +367,6 @@ footer a{color:var(--violeta);text-decoration:none;font-weight:600}
         <div class="tk-rows">
           <div class="tk-row"><span>Fecha</span><b>14 de noviembre · 22:00</b></div>
           <div class="tk-row"><span>Lugar</span><b>Depósito Cero, Adrogué</b></div>
-          <div class="tk-row" id="tk-menu-row" style="display:none"><span>Menú</span><b id="tk-menu"></b></div>
           <div class="tk-row" id="tk-cancion-row" style="display:none"><span>Tu tema en la playlist</span><b id="tk-cancion"></b></div>
           <div class="tk-row"><span>Quiz</span><b id="tk-quiz">—</b></div>
         </div>
@@ -407,6 +438,7 @@ const CFG = {
   salon: 'Depósito Cero',
   direccion: 'Av. del Portal 1808, Adrogué, Buenos Aires, Argentina', /* ⚠ REVISAR: demo */
   backend: 'localStorage',               /* ⚠ REVISAR: Supabase en producción */
+  musica: 'enzo.mp3',                    /* ⚠ REVISAR: subir enzo.mp3 al repo junto a este index.html */
 };
 
 const $ = id => document.getElementById(id);
@@ -415,8 +447,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hora = () => new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
 /* Estado del invitado — lo que dijo en el chat alimenta la fiesta */
-const YO = { nombre: '', hype: 0, quiz: 0, pleno: false, asiste: null, menu: null, cancion: null, notas: '' };
-const MENU_LBL = { 'estandar': '🍽️ Estándar', 'vegetariano': '🥗 Vegetariano', 'vegano': '🌱 Vegano', 'sin-tacc': '⚠️ Sin TACC' };
+const YO = { nombre: '', hype: 0, quiz: 0, pleno: false, asiste: null, cancion: null, notas: '' };
+/* Celulares con animaciones bloqueadas (accesibilidad / opciones de desarrollador) */
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let toastT;
 function toast(msg){
@@ -432,7 +465,7 @@ let actx = null, muted = false, mg = null;
 function ensureCtx(){
   if(!actx){
     actx = new (window.AudioContext || window.webkitAudioContext)();
-    mg = actx.createGain(); mg.gain.value = .22; mg.connect(actx.destination);
+    mg = actx.createGain(); mg.gain.value = 1; mg.connect(actx.destination);
   }
 }
 function pop(freq, vol){
@@ -453,7 +486,8 @@ function toggleAudio(){
   muted = !muted;
   const ic = muted ? '🔇' : '🔊';
   $('mute-btn').textContent = ic; $('fmute').textContent = ic;
-  if(mg) mg.gain.value = muted ? 0 : .22;
+  if(mg) mg.gain.value = muted ? 0 : 1;
+  if(musica && !analyser) musica.volume = muted ? 0 : 1;
 }
 
 /* ══════════════════════════════════════════════
@@ -464,7 +498,8 @@ let CW, CH, confs = [];
 const cres = () => { CW = ccv.width = innerWidth; CH = ccv.height = innerHeight; };
 cres(); addEventListener('resize', cres);
 function confetear(n){
-  for(let i = 0; i < (n || 60); i++){
+  n = n || 60; if(RM) n = Math.ceil(n / 3);
+  for(let i = 0; i < n; i++){
     confs.push({ x: CW / 2, y: CH * .35, vx: rnd(-6, 6), vy: rnd(-9, -2),
       w: rnd(4, 8), h: rnd(6, 11), rot: rnd(0, 7), rotv: rnd(-.25, .25), life: 1, decay: rnd(.005, .011),
       c: ['#7C5CFF', '#4A9FFF', '#3DDC84', '#FFC93C', '#FFFFFF'][(Math.random() * 5) | 0] });
@@ -819,20 +854,6 @@ async function guion(){
     await enzoDice(YO.hype >= 4
       ? `<span class="emoji-big">🎉🎉🎉</span><br>SÍÍÍ! ${YO.nombre}, sos oficialmente top 3 de mis invitados`
       : `<span class="emoji-big">🎉🎉🎉</span><br>SÍÍÍ! sabía que podía contar con vos`);
-    await enzoDice('para la cena, ¿qué preferís?');
-    YO.menu = await elegir([
-      { label: '🍽️ Estándar', value: 'estandar' },
-      { label: '🥗 Vegetariano', value: 'vegetariano' },
-      { label: '🌱 Vegano', value: 'vegano' },
-      { label: '⚠️ Sin TACC', value: 'sin-tacc' },
-    ]);
-    const rMenu = {
-      'estandar': 'clásico, respeto 🍽️ anotado',
-      'vegetariano': 'anotado 🥗 el catering ya está avisado',
-      'vegano': '🌱 hay opción vegana POSTA, no una ensalada triste, quedate tranqui',
-      'sin-tacc': 'todo controlado ⚠️ cocina aparte y sin cruces, palabra',
-    };
-    await enzoDice(rMenu[YO.menu]);
     await enzoDice('¿algo más que tenga que saber? (alergias, o lo que quieras decirme)');
     const [n] = await formInline([{ ph: 'Escribí acá (o mandá un "nada")', max: 300 }], '📨 Enviar');
     YO.notas = n;
@@ -870,7 +891,7 @@ function guardarRSVP(){
   try{
     const lista = JSON.parse(localStorage.getItem('chat-rsvp') || '[]');
     lista.push({ evento: CFG.evento, tipo: 'cumple-18', nombre: YO.nombre || 'Invitado/a',
-      asiste: YO.asiste, menu: YO.menu, extra: { notas: YO.notas || null, cancion: YO.cancion, quiz: YO.quiz, pleno: YO.pleno }, t: Date.now() });
+      asiste: YO.asiste, menu: null, extra: { notas: YO.notas || null, cancion: YO.cancion, quiz: YO.quiz, pleno: YO.pleno }, t: Date.now() });
     localStorage.setItem('chat-rsvp', JSON.stringify(lista));
   }catch(e){}
   /* ⚠ REVISAR: producción → POST `${supaUrl}/rest/v1/rsvp` con apikey/Bearer */
@@ -905,6 +926,7 @@ function sndDrop(){
 let revelada = false;
 function revelarFiesta(){
   if(revelada) return; revelada = true;
+  iniciarMusica();   /* dentro del gesto del usuario: el autoplay queda habilitado */
   sndDrop();
   const app = $('app');
   app.classList.add('tiembla');
@@ -940,9 +962,7 @@ function prepararTicket(){
   $('tk-quiz').textContent = `${YO.quiz}/5` + (YO.pleno ? ' 🏆' : '');
   if(YO.cancion){ $('tk-cancion-row').style.display = 'flex'; $('tk-cancion').textContent = YO.cancion; }
   if(YO.pleno) $('tk-premio').style.display = 'block';
-  if(YO.asiste){
-    if(YO.menu){ $('tk-menu-row').style.display = 'flex'; $('tk-menu').textContent = MENU_LBL[YO.menu] || YO.menu; }
-  } else {
+  if(!YO.asiste){
     const e = $('tk-estado');
     e.className = 'tk-estado no'; e.textContent = '✖ Dijiste que no…';
     $('banner-perdida').style.display = 'block';
@@ -976,62 +996,69 @@ const PAL = ['#7C5CFF', '#4A9FFF', '#3DDC84', '#FFC93C'];
 function iniciarFiesta(){
   if(F.on) return; F.on = true;
   initFCanvas();
-  iniciarBeat();
   construirWaveform();
   iniciarCountdown($('fiesta'), 'data-fcd');
   initTilt();
   initReveals();
 }
 
-/* — beat electrónico SUTIL (volumen bajo, sin saturar) — */
-const KICK_P = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,1];
-const HAT_P  = [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,1,1,0];
-const BASS_P = [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0];
-const BASS_N = [55, 55, 65.4, 49];
-let bassIdx = 0, noiseBuf = null;
-function iniciarBeat(){
+/* — MÚSICA REAL: enzo.mp3 + AnalyserNode —
+   El tema arranca al abrir la invitación y las
+   barras/luces reaccionan al audio REAL (graves).
+   Si el mp3 no carga o el analyser falla
+   (p. ej. abriendo el archivo local sin servir),
+   cae a un pulso generativo para que los visuales
+   nunca queden muertos. */
+let musica = null, analyser = null, freqData = null, lastBeat = 0, fallbackOn = false;
+function iniciarMusica(){
   ensureCtx();
-  if(!noiseBuf){
-    noiseBuf = actx.createBuffer(1, actx.sampleRate * .1, actx.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  }
-  const BPM = 124;
+  musica = new Audio(CFG.musica);
+  musica.loop = true;
+  musica.preload = 'auto';
+  try{
+    const src = actx.createMediaElementSource(musica);
+    analyser = actx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = .78;
+    freqData = new Uint8Array(analyser.frequencyBinCount);
+    src.connect(analyser); analyser.connect(mg);
+  }catch(e){ analyser = null; } /* ⚠ REVISAR: en file:// el analyser puede fallar; servido desde el repo funciona */
+  /* entra en silencio durante el riser y sube en el drop */
+  if(analyser){ mg.gain.setValueAtTime(0, actx.currentTime); }
+  else { musica.volume = 0; }
+  const p = musica.play();
+  if(p && p.catch) p.catch(() => iniciarPulsoFallback());
+  musica.onerror = () => iniciarPulsoFallback();
+  setTimeout(() => {
+    if(analyser && !muted) mg.gain.linearRampToValueAtTime(1, actx.currentTime + .6);
+    else if(!analyser){ musica.volume = muted ? 0 : 1; }
+  }, 1200);
+}
+/* pulso generativo de emergencia: solo mueve los visuales, sin sonido */
+function iniciarPulsoFallback(){
+  if(fallbackOn) return; fallbackOn = true;
   setInterval(() => {
-    const s = F.step % 16;
-    if(KICK_P[s]){
-      F.kick = 1.2;
-      const hn = $('hero-nombre');
-      hn.classList.add('beat'); setTimeout(() => hn.classList.remove('beat'), 90);
-      if(!muted){
-        const t = actx.currentTime;
-        const o = actx.createOscillator(), g = actx.createGain();
-        o.type = 'sine'; o.frequency.setValueAtTime(110, t);
-        o.frequency.exponentialRampToValueAtTime(42, t + .22);
-        g.gain.setValueAtTime(.5, t); g.gain.exponentialRampToValueAtTime(.001, t + .26);
-        o.connect(g); g.connect(mg); o.start(t); o.stop(t + .3);
-      }
-    }
-    if(HAT_P[s]){
-      F.hi = .8;
-      if(!muted){
-        const t = actx.currentTime;
-        const src = actx.createBufferSource(); src.buffer = noiseBuf;
-        const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7500;
-        const g = actx.createGain(); g.gain.setValueAtTime(.12, t);
-        g.gain.exponentialRampToValueAtTime(.001, t + .05);
-        src.connect(f); f.connect(g); g.connect(mg); src.start(t);
-      }
-    }
-    if(BASS_P[s] && !muted){
-      const t = actx.currentTime;
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.type = 'triangle'; o.frequency.value = BASS_N[bassIdx++ % BASS_N.length];
-      g.gain.setValueAtTime(.14, t); g.gain.exponentialRampToValueAtTime(.001, t + .3);
-      o.connect(g); g.connect(mg); o.start(t); o.stop(t + .32);
-    }
+    const s = F.step % 4;
+    if(s === 0){ F.kick = 1.1; beatNombre(); }
+    if(s === 2) F.hi = .7;
     F.step++;
-  }, (60 / BPM / 4) * 1000);
+  }, (60 / 124) * 1000 / 2);
+}
+function beatNombre(){
+  const hn = $('hero-nombre');
+  hn.classList.add('beat'); setTimeout(() => hn.classList.remove('beat'), 90);
+}
+/* lectura del audio real → pulsos (se llama cada frame) */
+function leerAudio(now){
+  if(!analyser) return;
+  analyser.getByteFrequencyData(freqData);
+  let bass = 0; for(let i = 1; i < 7; i++) bass += freqData[i]; bass /= 6;
+  let hi = 0; for(let i = 60; i < 100; i++) hi += freqData[i]; hi /= 40;
+  const nk = Math.max(0, (bass - 138) / 100);
+  if(nk > F.kick) F.kick = Math.min(1.2, nk * 1.15);
+  const nh = Math.max(0, (hi - 46) / 90);
+  if(nh > F.hi) F.hi = Math.min(1, nh);
+  if(nk > .55 && now - lastBeat > 240){ lastBeat = now; beatNombre(); }
 }
 
 /* — waveform beat-reactivo del hero — */
@@ -1042,7 +1069,7 @@ function construirWaveform(){
 }
 
 /* — canvas de la fiesta: 8 capas, delta-time — */
-let fcv, fctx, FW, FH, sparks = [];
+let fcv, fctx, FW, FH, sparks = [], cintas = [];
 function initFCanvas(){
   fcv = $('fcanvas'); fctx = fcv.getContext('2d');
   const rs = () => { FW = fcv.width = innerWidth; FH = fcv.height = innerHeight; };
@@ -1050,6 +1077,11 @@ function initFCanvas(){
   for(let i = 0; i < 34; i++) sparks.push({
     x: Math.random() * innerWidth, y: Math.random() * innerHeight,
     v: rnd(.15, .6), s: rnd(1, 2.6), c: PAL[(Math.random() * 4) | 0], ph: rnd(0, 6.28) });
+  /* serpentinas: cintas que caen ondulando, se reciclan arriba */
+  for(let i = 0; i < 11; i++) cintas.push({
+    x: Math.random() * innerWidth, y: rnd(-innerHeight, innerHeight),
+    len: rnd(70, 150), amp: rnd(9, 18), ph: rnd(0, 6.28),
+    v: rnd(.25, .7), giro: rnd(.02, .05), c: PAL[i % 4] });
   requestAnimationFrame(fframe);
 }
 function fframe(now = performance.now()){
@@ -1057,6 +1089,7 @@ function fframe(now = performance.now()){
   F.last = now; F.t += dt;
   F.kick = Math.max(0, F.kick - .055 * dt);
   F.hi = Math.max(0, F.hi - .08 * dt);
+  leerAudio(now);
   const k = F.kick, t = F.t;
   const cx = FW / 2, by = Math.min(FH * .17, 150);
 
@@ -1077,19 +1110,42 @@ function fframe(now = performance.now()){
   }
   fctx.globalAlpha = 1;
 
-  /* 3 — bola de espejos + lásers */
+  /* 3 — bola de espejos + haces volumétricos
+     Cada haz barre con su propio vaivén (no rotación
+     uniforme), se abre hacia abajo, titila y proyecta
+     un charco de luz elíptico donde toca el piso. */
   const br = Math.min(FW * .085, 44) * (1 + k * .05);
   fctx.strokeStyle = 'rgba(160,190,255,.5)'; fctx.lineWidth = 1.5;
   fctx.beginPath(); fctx.moveTo(cx, 0); fctx.lineTo(cx, by - br); fctx.stroke();
-  for(let i = 0; i < 6; i++){
-    const a = t * .012 + i * Math.PI / 3;
-    fctx.save(); fctx.translate(cx, by); fctx.rotate(a);
-    const lg = fctx.createLinearGradient(0, 0, 0, FH);
-    lg.addColorStop(0, PAL[i % 4] + (k > .4 ? '55' : '2E')); lg.addColorStop(1, 'transparent');
+  fctx.save();
+  fctx.globalCompositeOperation = 'lighter';
+  for(let i = 0; i < 7; i++){
+    /* vaivén individual: cada haz tiene velocidad y fase propias */
+    const sway = Math.sin(t * (.004 + i * .0011) + i * 2.3) * .95;
+    const flick = .55 + .45 * Math.sin(t * .045 + i * 4.7);           /* titileo */
+    const alfa = (.07 + .09 * flick + k * .10);
+    const bx = cx + Math.sin(sway) * FW * .62;                        /* dónde toca el piso */
+    const wTop = 3, wBot = FW * (.05 + .035 * flick);                 /* se abre en cono */
+    const lg = fctx.createLinearGradient(cx, by, bx, FH);
+    lg.addColorStop(0, PAL[i % 4] + 'D9');
+    lg.addColorStop(.25, PAL[i % 4] + '59');
+    lg.addColorStop(1, PAL[i % 4] + '00');
     fctx.fillStyle = lg;
-    fctx.beginPath(); fctx.moveTo(0, 0); fctx.lineTo(-FH * .06, FH); fctx.lineTo(FH * .06, FH);
-    fctx.closePath(); fctx.fill(); fctx.restore();
+    fctx.globalAlpha = alfa;
+    fctx.beginPath();
+    fctx.moveTo(cx - wTop, by); fctx.lineTo(cx + wTop, by);
+    fctx.lineTo(bx + wBot, FH); fctx.lineTo(bx - wBot, FH);
+    fctx.closePath(); fctx.fill();
+    /* charco de luz en el piso */
+    const pool = fctx.createRadialGradient(bx, FH - 8, 0, bx, FH - 8, wBot * 1.5);
+    pool.addColorStop(0, PAL[i % 4] + '4D'); pool.addColorStop(1, PAL[i % 4] + '00');
+    fctx.fillStyle = pool;
+    fctx.globalAlpha = alfa * 1.6;
+    fctx.save(); fctx.translate(bx, FH - 8); fctx.scale(1, .28);
+    fctx.beginPath(); fctx.arc(0, 0, wBot * 1.5, 0, 6.29); fctx.fill(); fctx.restore();
   }
+  fctx.restore();
+  fctx.globalAlpha = 1;
   const bgr = fctx.createRadialGradient(cx - br * .3, by - br * .3, br * .1, cx, by, br);
   bgr.addColorStop(0, '#E8F0FF'); bgr.addColorStop(.5, '#8FA8CE'); bgr.addColorStop(1, '#3A4A66');
   fctx.fillStyle = bgr;
@@ -1106,13 +1162,24 @@ function fframe(now = performance.now()){
     fctx.fill();
   }
 
-  /* 4 — shockwave en el kick */
-  if(k > .05){
-    const sr = (1.2 - k) * Math.max(FW, FH) * .55;
-    fctx.strokeStyle = `rgba(124,92,255,${k * .5})`;
-    fctx.lineWidth = 2 + k * 5;
-    fctx.beginPath(); fctx.arc(cx, FH * .5, sr, 0, 6.29); fctx.stroke();
+  /* 4 — serpentinas: cintas de fiesta que caen ondulando */
+  fctx.lineCap = 'round';
+  for(const c of cintas){
+    c.y += c.v * dt * 1.1;
+    if(c.y - c.len > FH){ c.y = -c.len - rnd(0, 80); c.x = Math.random() * FW; }
+    fctx.strokeStyle = c.c;
+    fctx.globalAlpha = .55;
+    fctx.lineWidth = 3;
+    fctx.beginPath();
+    const seg = 9;
+    for(let j = 0; j <= seg; j++){
+      const yy = c.y + (j / seg) * c.len;
+      const xx = c.x + Math.sin(c.ph + t * c.giro + j * 1.15) * c.amp;
+      j === 0 ? fctx.moveTo(xx, yy) : fctx.lineTo(xx, yy);
+    }
+    fctx.stroke();
   }
+  fctx.globalAlpha = 1;
 
   /* 5 — barras EQ en el piso */
   const nB = Math.max(10, (FW / 30) | 0), bw = FW / nB;
@@ -1186,15 +1253,34 @@ function initTilt(){
 
 /* — scroll reveals — */
 function initReveals(){
+  const els = document.querySelectorAll('.rev');
+  if(RM || !('IntersectionObserver' in window)){
+    els.forEach(el => el.classList.add('on'));   /* sin animaciones: todo visible, nada queda oculto */
+    return;
+  }
   const io = new IntersectionObserver(es => es.forEach(e => {
     if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); }
   }), { threshold: .18 });
-  document.querySelectorAll('.rev').forEach(el => io.observe(el));
+  els.forEach(el => io.observe(el));
 }
 
 /* ══════════════════════════════════════════════
    ARRANQUE
    ══════════════════════════════════════════════ */
+/* glifos flotantes del wallpaper del chat */
+(function decoChat(){
+  const cont = $('chat-deco'), G = ['🎂','🎧','🎉','🎈','✨','🪩','🎵'];
+  for(let i = 0; i < 10; i++){
+    const s = document.createElement('span');
+    s.className = 'deco-g';
+    s.textContent = G[i % G.length];
+    s.style.left = rnd(4, 90) + '%';
+    s.style.top = rnd(6, 92) + '%';
+    s.style.setProperty('--d', rnd(10, 20).toFixed(1) + 's');
+    cont.appendChild(s);
+  }
+})();
+
 let abierto = false;
 function abrirChat(){
   if(abierto) return; abierto = true;
