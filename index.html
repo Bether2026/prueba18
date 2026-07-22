@@ -157,9 +157,7 @@ body.modo-fiesta{overflow:auto;height:auto}
   color:var(--ink-dim);letter-spacing:.06em}
 .chip-b i{width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);
   box-shadow:0 0 12px var(--glow,transparent)}
-.msg.premio-b{background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid var(--oro);
-  box-shadow:0 0 30px rgba(255,201,60,.35)}
-.premio-tit{font-weight:800;font-size:1.1rem;color:var(--oro)}
+
 #barra{flex:0 0 auto;padding:10px 12px max(env(safe-area-inset-bottom),12px);position:relative;z-index:3;
   background:var(--header);border-top:1px solid rgba(255,255,255,.06)}
 #opciones{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:flex-end}
@@ -242,8 +240,7 @@ body.modo-fiesta #fiesta{display:block}
 .tk-row{display:flex;justify-content:space-between;gap:1rem;font-size:.86rem}
 .tk-row span{color:var(--ink-dim)}
 .tk-row b{font-weight:600;text-align:right}
-.tk-premio{margin:0 1.3rem 1.2rem;padding:.7rem .9rem;border-radius:12px;text-align:center;font-size:.82rem;
-  background:linear-gradient(135deg,#3A2B08,#57400C);border:1.5px solid var(--oro);color:var(--oro);font-weight:700}
+
 .btn-fiesta{margin-top:1.4rem;padding:1rem 1.8rem;min-height:48px;border-radius:999px;border:none;cursor:pointer;
   background:linear-gradient(110deg,var(--violeta),var(--azul));color:#fff;
   font-family:'Outfit',sans-serif;font-weight:700;font-size:.98rem;
@@ -368,9 +365,9 @@ footer a{color:var(--violeta);text-decoration:none;font-weight:600}
           <div class="tk-row"><span>Fecha</span><b>14 de noviembre · 22:00</b></div>
           <div class="tk-row"><span>Lugar</span><b>Depósito Cero, Adrogué</b></div>
           <div class="tk-row" id="tk-cancion-row" style="display:none"><span>Tu tema en la playlist</span><b id="tk-cancion"></b></div>
-          <div class="tk-row"><span>Quiz</span><b id="tk-quiz">—</b></div>
+
         </div>
-        <div class="tk-premio" id="tk-premio" style="display:none">🏆 Premio pendiente — mostrá esta entrada en la fiesta</div>
+
       </div>
       <button class="btn-fiesta" id="btn-arrepenti" style="display:none" onclick="cambiarAVoy()">🔄 Me arrepentí… ¡VOY! 🎉</button>
       <button class="btn-fiesta" onclick="descargarICS()">📆 Agendar en mi calendario</button>
@@ -447,7 +444,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hora = () => new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
 /* Estado del invitado — lo que dijo en el chat alimenta la fiesta */
-const YO = { nombre: '', hype: 0, quiz: 0, pleno: false, asiste: null, cancion: null, notas: '' };
+const YO = { nombre: '', hype: 0, asiste: null, cancion: null, notas: '' };
 /* Celulares con animaciones bloqueadas (accesibilidad / opciones de desarrollador) */
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -781,50 +778,6 @@ async function guion(){
     ? 'entonces sos de los míos. entrada VIP directa 😎'
     : 'jajaja excusa perfecta para renovarte… el 14 quiero verte estrenar 👀');
 
-  /* ── QUIZ ── */
-  await enzoDice('ahora… una cosita más 😏');
-  await enzoDice('<b>¿cuánta atención me prestaste?</b> 5 preguntas. si la rompés, hay <b>premio real</b> en la fiesta 🎁');
-  const jugar = await elegir([
-    { label: 'dale, va 🔥', value: 'si', primaria: true, hype: 1 },
-    { label: 'uy no, presión…', value: 'si2' },
-  ]);
-  if(jugar === 'si2') await enzoDice('no hay opción de no jugar jajaja, arrancamos:');
-  else await enzoDice('me gusta la confianza. arrancamos:');
-
-  const QUIZ = [
-    { q: '1/5 — ¿qué día es la fiesta?', ok: '14 de noviembre 🗓', ops: ['14 de noviembre 🗓', '15 de noviembre', '¿había fiesta?'],
-      bien: 'ESA. 14/11, grabalo a fuego 🔥', mal: 'nooo jajaja es el <b>14/11</b>, prestá atención 😤' },
-    { q: '2/5 — ¿cómo se llama el lugar?', ok: 'Depósito Cero 📦', ops: ['Depósito Uno', 'Depósito Cero 📦', 'la casa de tu primo'],
-      bien: 'exacto, Depósito Cero 🙌', mal: 'era <b>Depósito Cero</b>… menos mal que te mandé el mapa 😅' },
-    { q: '3/5 — ¿cuántos cumplo?', ok: '18 🎂', ops: ['17 para siempre', '18 🎂', '40 de espíritu'],
-      bien: '18!! mayor de edad, imparable 😎', mal: 'JAJAJA no, <b>18</b>. aunque lo de 40 de espíritu un poco sí' },
-    { q: '4/5 — ¿a qué hora arranca?', ok: '22:00 ⏰', ops: ['20:00', '22:00 ⏰', 'cuando llegues vos'],
-      bien: '22:00 en punto (bueno, 22:30 siendo realistas)', mal: 'era <b>22:00</b>… pero "cuando llegues vos" me gustó 😌' },
-    { q: '5/5 — la más importante: ¿qué es lo que NO puede faltar esa noche?', ok: 'VOS', ops: ['la música', 'la comida', 'VOS'],
-      bien: '<span class="emoji-big">🥹</span> respuesta correcta. la única que valía doble.', mal: 'mmm técnicamente sí, pero la respuesta era <b>VOS</b> 💜 (te la doy por buena)' },
-  ];
-  YO.quiz = 0;
-  for(const p of QUIZ){
-    await enzoDice(p.q);
-    const r = await elegir(p.ops.map(o => ({ label: o })));
-    const acierto = r === p.ok || p.q.startsWith('5/5');
-    if(acierto) YO.quiz++;
-    await enzoDice(acierto ? p.bien : p.mal);
-  }
-  try{ localStorage.setItem('chat-quiz', String(YO.quiz)); }catch(e){}
-  if(YO.quiz >= 4){
-    YO.pleno = true;
-    confetear(90);
-    if(navigator.vibrate) navigator.vibrate([30, 50, 30, 50, 100]);
-    await enzoDice(`
-      <div class="premio-tit">🏆 ${YO.quiz}/5 — GANASTE</div>
-      <div class="dest-sub">te lo dejo anotado en tu entrada 🎁<br>(ya vas a ver de qué hablo…)</div>
-    `, 'premio-b');
-    try{ localStorage.setItem('chat-pleno', '1'); }catch(e){}
-  } else {
-    await enzoDice(`${YO.quiz}/5… bueno, para eso está la fiesta: para conocernos mejor 😂`);
-  }
-
   /* ── PLAYLIST ── */
   await enzoDice('otra cosa: estoy armando la playlist con el DJ 🎧');
   await enzoDice('¿qué canción te hace correr a la pista? pasámela 👇');
@@ -891,7 +844,7 @@ function guardarRSVP(){
   try{
     const lista = JSON.parse(localStorage.getItem('chat-rsvp') || '[]');
     lista.push({ evento: CFG.evento, tipo: 'cumple-18', nombre: YO.nombre || 'Invitado/a',
-      asiste: YO.asiste, menu: null, extra: { notas: YO.notas || null, cancion: YO.cancion, quiz: YO.quiz, pleno: YO.pleno }, t: Date.now() });
+      asiste: YO.asiste, menu: null, extra: { notas: YO.notas || null, cancion: YO.cancion }, t: Date.now() });
     localStorage.setItem('chat-rsvp', JSON.stringify(lista));
   }catch(e){}
   /* ⚠ REVISAR: producción → POST `${supaUrl}/rest/v1/rsvp` con apikey/Bearer */
@@ -959,9 +912,8 @@ function revelarFiesta(){
    ══════════════════════════════════════════════ */
 function prepararTicket(){
   $('tk-nom').textContent = (YO.nombre || 'Invitado/a').toUpperCase();
-  $('tk-quiz').textContent = `${YO.quiz}/5` + (YO.pleno ? ' 🏆' : '');
+
   if(YO.cancion){ $('tk-cancion-row').style.display = 'flex'; $('tk-cancion').textContent = YO.cancion; }
-  if(YO.pleno) $('tk-premio').style.display = 'block';
   if(!YO.asiste){
     const e = $('tk-estado');
     e.className = 'tk-estado no'; e.textContent = '✖ Dijiste que no…';
